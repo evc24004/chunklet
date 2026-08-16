@@ -50,8 +50,9 @@ Chunklet keeps the native chunk leases alive through the commit. A server
 restart can therefore load the target columns from the database instead of
 regenerating them.
 
-See [native compatibility](docs/native-compatibility.md) and
-[performance](docs/performance.md).
+See [native compatibility](docs/native-compatibility.md),
+[performance](docs/performance.md), and the reusable
+[database column inspector](tools/database/README.md).
 
 ## License
 
