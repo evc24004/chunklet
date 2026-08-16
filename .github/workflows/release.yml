@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes \
+            clang-19 \
+            cmake \
+            libc++-19-dev \
+            libc++abi-19-dev \
+            ninja-build
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=clang++-19
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME"; then
+            gh release upload "$GITHUB_REF_NAME" \
+              build/endstone_chunklet.so --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              build/endstone_chunklet.so \
+              --generate-notes \
+              --title "$GITHUB_REF_NAME"
+          fi

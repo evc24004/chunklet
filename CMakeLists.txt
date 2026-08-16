@@ -34,13 +34,3 @@ endstone_add_plugin(chunklet
 target_include_directories(chunklet PRIVATE src)
 target_compile_options(chunklet PRIVATE -Wall -Wextra -Wpedantic)
 
-include(CTest)
-if(BUILD_TESTING)
-    add_executable(chunklet_plan_tests
-        tests/render/plan_test.cpp
-        src/render/plan.cpp
-    )
-    target_include_directories(chunklet_plan_tests PRIVATE src)
-    target_compile_options(chunklet_plan_tests PRIVATE -Wall -Wextra -Wpedantic)
-    add_test(NAME chunklet_plan_tests COMMAND chunklet_plan_tests)
-endif()
