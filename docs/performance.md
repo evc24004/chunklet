@@ -34,10 +34,11 @@ The border lets BDS finish the target chunks at the edge of the requested square
 | Time | 17.16 seconds |
 | Target throughput | 238.8 chunks per second |
 
-The run used fresh terrain. No target chunk was already loaded. The result came
-from the plugin completion event, after the final native save batch completed.
+The run used fresh terrain. No target chunk was already loaded. The result
+measured target `ChunkLoadEvent` completion. It did not confirm that each target
+column was written to the world database.
 
 The 500 chunks-per-second target was not reached on this system. A change that
-saved only target chunks and flushed once at completion gave 238.8 chunks per
-second. The prior result was 238.2 chunks per second. Native BDS generation was
-the limiting work in this test.
+requested saves only for target chunks and flushed once at completion gave
+238.8 chunks per second. The prior result was 238.2 chunks per second. Native
+BDS generation was the limiting work in this test.
