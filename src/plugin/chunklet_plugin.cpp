@@ -1,6 +1,7 @@
 #include "plugin/chunklet_plugin.h"
 
 #include "native/layout.h"
+#include "noise/interpolation/optimizer.h"
 #include "noise/shuffle/optimizer.h"
 
 #include <format>
@@ -10,14 +11,22 @@ namespace chunklet {
 void ChunkletPlugin::onLoad()
 {
     native::verify_layout();
-    noise::shuffle::install();
+    noise::interpolation::install();
+    try {
+        noise::shuffle::install();
+    } catch (...) {
+        noise::interpolation::remove();
+        throw;
+    }
 }
 
 void ChunkletPlugin::onEnable()
 {
     registerEvent(&ChunkletPlugin::onChunkLoad, *this);
-    getLogger().info("Native chunk loader and fused noise shuffle ready: BDS build ID {}.",
-                     native::kSupportedBuildId);
+    getLogger().info(
+        "Native chunk loader, fused noise shuffle, and AVX2 octave evaluator ready: "
+        "BDS build ID {}.",
+        native::kSupportedBuildId);
 }
 
 void ChunkletPlugin::onDisable()
@@ -27,6 +36,13 @@ void ChunkletPlugin::onDisable()
         last_ = job_->snapshot();
         job_.reset();
     }
+    const auto interpolation_mismatches = noise::interpolation::mismatch_count();
+    if (interpolation_mismatches != 0) {
+        getLogger().error(
+            "AVX2 octave evaluator disabled after {} bit-exact validation mismatch(es).",
+            interpolation_mismatches);
+    }
+    noise::interpolation::remove();
     noise::shuffle::remove();
 }
 
@@ -102,7 +118,7 @@ std::string ChunkletPlugin::format(const render::JobSnapshot &snapshot)
 
 }  // namespace chunklet
 
-ENDSTONE_PLUGIN("chunklet", "0.1.3", chunklet::ChunkletPlugin)
+ENDSTONE_PLUGIN("chunklet", "0.1.4", chunklet::ChunkletPlugin)
 {
     description = "Pre-generate Bedrock chunks with the native BDS chunk loader.";
     website = "https://github.com/evc24004/chunklet";

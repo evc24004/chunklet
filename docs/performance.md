@@ -64,3 +64,22 @@ runs differed in the same palette and metadata record tags as the optimized
 run. All other record tags matched. The optimizer additionally validates its
 entire 256-step bounded-integer sequence against BDS on a cloned RNG state
 before using the fused path.
+
+## AVX2 octave evaluator
+
+The v0.1.4 evaluator was measured with a controlled one-server-thread run to
+isolate CPU work from scheduler variance:
+
+| Metric | v0.1.4 | v0.1.3 |
+| --- | ---: | ---: |
+| Time | 63.72 seconds | 64.38 seconds |
+| Target throughput | 64.3 chunks/s | 63.6 chunks/s |
+| Generation phase | 62.41 seconds | 63.25 seconds |
+| Persisted target columns | 4,096 | 4,096 |
+
+This is a 1.1% throughput increase and a 1.3% generation-time reduction.
+Process-level counters from separate matched runs recorded 698.69 billion
+instructions for v0.1.4 versus 719.62 billion for v0.1.3, a 2.9% reduction.
+Sixteen-thread wall-clock runs varied too widely to establish a larger claim.
+The first 4,096 live octave evaluations matched the BDS implementation bit for
+bit, and direct database inspection found all 4,096 target columns serviceable.

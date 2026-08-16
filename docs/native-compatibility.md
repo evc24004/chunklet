@@ -10,7 +10,7 @@ have a stable ABI. Use the plugin only with a supported binary.
 | Product | Bedrock Dedicated Server for Linux |
 | Version | 1.26.40.8 |
 | GNU build ID | `2ae1fef8c3ce6a8ebdc43f96a30c4ab307c5ff82` |
-| Architecture | x86-64 |
+| Architecture | x86-64 with AVX2 |
 
 Chunklet stops during plugin enable if the GNU build ID is different. It then
 checks the RTTI names, vtable address points, vtable targets, and instruction
@@ -29,6 +29,20 @@ sites. On the first invocation it clones the RNG state and compares all 256
 bounded results plus the final state against the BDS virtual `nextInt`
 implementation. An unknown RNG implementation or failed comparison uses the
 original virtual calls. Plugin disable restores the original instruction bytes.
+
+## Multi-octave interpolation optimization
+
+Chunklet replaces the build-pinned `MultiOctaveNoiseImpl<false>` normalized
+evaluator with an AVX2 implementation. It evaluates the eight gradient corners
+together and uses byte shuffles instead of scalar gradient-table loads. The
+outer evaluator also removes repeated library calls and intermediate stack
+traffic while preserving the original operation order.
+
+Before patching, Chunklet verifies the original 14-byte function prefix. A
+trampoline retains the complete BDS implementation, and the first 4,096 live
+evaluations compare the original and optimized float results bit for bit. Any
+mismatch permanently selects the original implementation. Plugin disable
+restores the original instruction bytes.
 
 ## Verified calls
 
