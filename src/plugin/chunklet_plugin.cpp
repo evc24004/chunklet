@@ -1,16 +1,22 @@
 #include "plugin/chunklet_plugin.h"
 
 #include "native/layout.h"
+#include "noise/shuffle/optimizer.h"
 
 #include <format>
 
 namespace chunklet {
 
-void ChunkletPlugin::onEnable()
+void ChunkletPlugin::onLoad()
 {
     native::verify_layout();
+    noise::shuffle::install();
+}
+
+void ChunkletPlugin::onEnable()
+{
     registerEvent(&ChunkletPlugin::onChunkLoad, *this);
-    getLogger().info("Native chunk loader ready: BDS build ID {}.",
+    getLogger().info("Native chunk loader and fused noise shuffle ready: BDS build ID {}.",
                      native::kSupportedBuildId);
 }
 
@@ -21,6 +27,7 @@ void ChunkletPlugin::onDisable()
         last_ = job_->snapshot();
         job_.reset();
     }
+    noise::shuffle::remove();
 }
 
 void ChunkletPlugin::onChunkLoad(const endstone::ChunkLoadEvent &event)
@@ -95,7 +102,7 @@ std::string ChunkletPlugin::format(const render::JobSnapshot &snapshot)
 
 }  // namespace chunklet
 
-ENDSTONE_PLUGIN("chunklet", "0.1.2", chunklet::ChunkletPlugin)
+ENDSTONE_PLUGIN("chunklet", "0.1.3", chunklet::ChunkletPlugin)
 {
     description = "Pre-generate Bedrock chunks with the native BDS chunk loader.";
     website = "https://github.com/evc24004/chunklet";

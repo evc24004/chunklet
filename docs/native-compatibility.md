@@ -17,6 +17,19 @@ checks the RTTI names, vtable address points, vtable targets, and instruction
 prefixes used by persistence. These checks run before Chunklet reads an
 Endstone native handle.
 
+## Noise shuffle optimization
+
+For this exact build, Chunklet replaces the three 256-iteration permutation
+shuffle loops inside `MultiOctaveNoiseImpl` construction with one native call
+per loop. The replacement keeps Xoroshiro state in registers and implements the
+same bounded-integer reduction and state transition as BDS.
+
+Before patching, Chunklet verifies every original instruction byte at the three
+sites. On the first invocation it clones the RNG state and compares all 256
+bounded results plus the final state against the BDS virtual `nextInt`
+implementation. An unknown RNG implementation or failed comparison uses the
+original virtual calls. Plugin disable restores the original instruction bytes.
+
 ## Verified calls
 
 The addresses in this table are ELF virtual addresses before PIE relocation.

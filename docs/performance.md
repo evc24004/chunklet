@@ -10,7 +10,7 @@ This benchmark measures a fresh 1,000 by 1,000 block area.
 | Server threads | 8 |
 | Bedrock Dedicated Server | 1.26.40.8 for Linux |
 | Endstone | 0.11.7 |
-| Chunklet | v0.1.2 release build with Clang 19 |
+| Chunklet | v0.1.3 release build with Clang 19 |
 | World seed | `-809623823` |
 | Dimension | Overworld |
 | Center | `7000000,7000000` |
@@ -27,28 +27,40 @@ five chunks on the other three edges. The native loader processes a 75 by 74
 area, or 5,550 chunks. The border lets BDS finish the target chunks at the edge
 of the requested square.
 
-## Result
+## Optimized result
 
-| Metric | Result |
-| --- | ---: |
-| Target chunks | 4,096 |
-| Completed target chunks | 4,096 |
-| Time | 16.17 seconds |
-| Target throughput | 253.4 chunks per second |
-| Request phase | 0.12 seconds |
-| Generation phase | 15.16 seconds |
-| Persistence phase | 0.88 seconds |
-| Persisted target columns | 4,096 |
+| Metric | Optimized | Unmodified baseline |
+| --- | ---: | ---: |
+| Target chunks | 4,096 | 4,096 |
+| Completed target chunks | 4,096 | 4,096 |
+| Time | 15.76 seconds | 16.93 seconds |
+| Target throughput | 259.9 chunks/s | 242.0 chunks/s |
+| Request phase | 0.12 seconds | 0.11 seconds |
+| Generation phase | 14.72 seconds | 15.83 seconds |
+| Persistence phase | 0.90 seconds | 0.98 seconds |
+| Persisted target columns | 4,096 | 4,096 |
 
-The run used fresh terrain. No target chunk was already loaded. Completion
-included the synchronous native database commit. After shutdown, direct
-inspection of the world database confirmed that all 4,096 target columns had
-finalized state, Data3D, and their expected subchunks.
+These adjacent fresh-world runs used the same binary, center, seed, and
+eight-thread setting. Fusing the three permutation shuffles in BDS noise
+construction improved target throughput by 7.4% and reduced elapsed time by
+1.17 seconds. Separate unmodified runs ranged from 242.0 to 252.3 chunks per
+second, so the result should be read as a matched-run measurement rather than a
+universal gain.
 
-## Profiling result
+Completion included the synchronous native database commit. After shutdown,
+direct inspection confirmed that every target column had finalized state,
+Data3D, and its expected subchunks.
 
-Native generation dominated the run: 15.16 of 16.17 seconds. On a separate
-matched fresh-center diagnostic, automatic server threading reached 344.2
-target chunks per second and an explicit 32-thread setting reached 343.1.
-Oversubscription did not improve throughput. The 500 chunks-per-second target
-was not reached on this BDS build and CPU.
+## Native profile
+
+A cycles profile of the unmodified binary attributed 9.51% of samples to
+`MultiOctaveNoiseImpl` construction. The same function range received no
+samples in a 42,959-sample optimized profile; the fused shuffle finished between
+samples. Profiling overhead reduced absolute throughput, so throughput above
+comes from unprofiled runs.
+
+Raw databases are not byte-deterministic across fresh BDS runs: two unmodified
+runs differed in the same palette and metadata record tags as the optimized
+run. All other record tags matched. The optimizer additionally validates its
+entire 256-step bounded-integer sequence against BDS on a cloned RNG state
+before using the fused path.

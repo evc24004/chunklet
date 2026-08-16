@@ -12,6 +12,7 @@ namespace chunklet {
 
 class ChunkletPlugin : public endstone::Plugin {
 public:
+    void onLoad() override;
     void onEnable() override;
     void onDisable() override;
     bool onCommand(endstone::CommandSender &sender, const endstone::Command &command,
