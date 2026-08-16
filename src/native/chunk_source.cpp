@@ -40,6 +40,70 @@ bool known_chunk_source(const void *source, std::uintptr_t base)
            vtable == base + kNetworkChunkSourceVtable ||
            vtable == base + kWorldLimitChunkSourceVtable;
 }
+void *db_storage(void *source, std::uintptr_t base)
+{
+    auto *storage = *reinterpret_cast<void **>(
+        static_cast<char *>(source) + 0x30);
+    if (storage == nullptr ||
+        *reinterpret_cast<std::uintptr_t *>(storage) != base + kDbChunkStorageVtable) {
+        throw std::runtime_error("BDS ChunkSource storage does not match DBChunkStorage");
+    }
+    return storage;
+}
+
+void *current_write_batch(std::uintptr_t base)
+{
+    auto *thread = static_cast<char *>(__builtin_thread_pointer());
+    if (*(thread - kWriteBatchInitializedTlsOffset) == 0) {
+        throw std::runtime_error("BDS thread-local write batch was not initialized");
+    }
+    auto *batch = thread - kWriteBatchTlsOffset;
+    if (*reinterpret_cast<std::uintptr_t *>(batch) !=
+        base + kLevelStorageWriteBatchVtable) {
+        throw std::runtime_error("BDS thread-local write batch does not match the supported layout");
+    }
+    return batch;
+}
+// The pinned BDS batch ABI consumes libc++'s 24-byte inline string layout.
+struct BdsSmallString {
+    alignas(void *) unsigned char bytes[24]{};
+};
+static_assert(sizeof(BdsSmallString) == 24);
+
+BdsSmallString small_string(const void *data, std::size_t size)
+{
+    if (size > 22) {
+        throw std::length_error("BDS inline string capacity exceeded");
+    }
+    BdsSmallString value;
+    value.bytes[0] = static_cast<unsigned char>(size << 1);
+    std::memcpy(value.bytes + 1, data, size);
+    return value;
+}
+
+void write_finalized_record(
+    void *batch, const void *chunk, const void *dimension, std::uintptr_t base)
+{
+    unsigned char key_bytes[13]{};
+    std::memcpy(key_bytes, static_cast<const char *>(chunk) + 0x50, 8);
+    std::size_t key_size = 8;
+    if (*reinterpret_cast<const std::uintptr_t *>(dimension) !=
+        base + kOverworldVtable) {
+        const auto *name = rtti_name(dimension);
+        const std::int32_t dimension_id =
+            name != nullptr && std::strcmp(name, "15NetherDimension") == 0 ? 1 : 2;
+        std::memcpy(key_bytes + key_size, &dimension_id, sizeof(dimension_id));
+        key_size += sizeof(dimension_id);
+    }
+    key_bytes[key_size++] = 0x36;
+    const std::int32_t finalized = 2;
+    auto key = small_string(key_bytes, key_size);
+    auto value = small_string(&finalized, sizeof(finalized));
+    auto **vtable = *reinterpret_cast<void ***>(batch);
+    using Put = void (*)(void *, void *, void *, int);
+    reinterpret_cast<Put>(vtable[kWriteBatchPutSlot])(
+        batch, &key, &value, 4);
+}
 
 }  // namespace
 
@@ -73,7 +137,7 @@ ChunkSource ChunkSource::resolve(void *endstone_dimension)
         throw std::runtime_error("BDS ChunkSource does not match the supported layout: " +
                                  std::string(name == nullptr ? "<null>" : name));
     }
-    return ChunkSource(chunk_source);
+    return ChunkSource(chunk_source, dimension);
 }
 
 std::shared_ptr<void> ChunkSource::request(render::ChunkPosition position) const
@@ -90,18 +154,43 @@ std::shared_ptr<void> ChunkSource::request(render::ChunkPosition position) const
 }
 
 
-bool ChunkSource::save(void *chunk) const
+void ChunkSource::begin_persistence() const
 {
+    const auto base = executable_base();
+    db_storage(handle_, base);
     auto **vtable = *reinterpret_cast<void ***>(handle_);
-    using SaveLiveChunk = bool (*)(void *, void *);
-    return reinterpret_cast<SaveLiveChunk>(vtable[kSaveLiveChunkSlot])(handle_, chunk);
+    using FlushThreadBatch = void (*)(void *);
+    reinterpret_cast<FlushThreadBatch>(
+        vtable[kFlushThreadBatchSlot])(handle_);
+    current_write_batch(base);
 }
 
-void ChunkSource::flush() const
+
+void ChunkSource::serialize(void *chunk) const
+{
+    if (chunk == nullptr) {
+        throw std::invalid_argument("cannot persist a null LevelChunk");
+    }
+    const auto base = executable_base();
+    auto *storage = db_storage(handle_, base);
+    auto *batch = current_write_batch(base);
+    using SetChunkFinalized = void (*)(void *, int);
+    reinterpret_cast<SetChunkFinalized>(
+        base + kSetChunkFinalizedTarget)(chunk, 2);
+    using MarkChunkDirty = void (*)(void *);
+    reinterpret_cast<MarkChunkDirty>(base + kMarkChunkDirtyTarget)(chunk);
+    using SerializeChunk = void (*)(void *, void *, void *, bool);
+    reinterpret_cast<SerializeChunk>(base + kSerializeChunkTarget)(
+        storage, chunk, batch, false);
+    write_finalized_record(batch, chunk, dimension_, base);
+}
+
+void ChunkSource::commit_persistence() const
 {
     auto **vtable = *reinterpret_cast<void ***>(handle_);
     using FlushThreadBatch = void (*)(void *);
-    reinterpret_cast<FlushThreadBatch>(vtable[kFlushThreadBatchSlot])(handle_);
+    reinterpret_cast<FlushThreadBatch>(
+        vtable[kFlushThreadBatchSlot])(handle_);
 }
 
 }  // namespace chunklet::native

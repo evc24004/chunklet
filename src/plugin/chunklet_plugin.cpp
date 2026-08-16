@@ -31,6 +31,22 @@ void ChunkletPlugin::onChunkLoad(const endstone::ChunkLoadEvent &event)
     const auto &chunk = event.getChunk();
     std::string error;
     const auto result = job_->on_chunk_loaded({chunk.getX(), chunk.getZ()}, error);
+    if (result == render::LoadEventResult::PersistenceReady) {
+        persistActive();
+    } else if (result == render::LoadEventResult::Finished) {
+        finishActive();
+    } else if (result == render::LoadEventResult::Failed) {
+        failActive(error);
+    }
+}
+
+void ChunkletPlugin::persistActive()
+{
+    if (!job_ || !job_->awaiting_persistence()) {
+        return;
+    }
+    std::string error;
+    const auto result = job_->finalize_persistence(error);
     if (result == render::LoadEventResult::Finished) {
         finishActive();
     } else if (result == render::LoadEventResult::Failed) {
@@ -76,10 +92,10 @@ std::string ChunkletPlugin::format(const render::JobSnapshot &snapshot)
 
 }  // namespace chunklet
 
-ENDSTONE_PLUGIN("chunklet", "0.1.0", chunklet::ChunkletPlugin)
+ENDSTONE_PLUGIN("chunklet", "0.1.1", chunklet::ChunkletPlugin)
 {
     description = "Pre-generate Bedrock chunks with the native BDS chunk loader.";
-    website = "https://github.com/GatewayHoldingsLLC/endstone-chunklet";
+    website = "https://github.com/evc24004/chunklet";
     authors = {"Chunklet contributors"};
     load = endstone::PluginLoadOrder::PostWorld;
     prefix = "Chunklet";

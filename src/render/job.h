@@ -15,6 +15,7 @@ namespace chunklet::render {
 enum class LoadEventResult {
     Ignored,
     Progressed,
+    PersistenceReady,
     Finished,
     Failed,
 };
@@ -43,10 +44,15 @@ public:
     [[nodiscard]] bool start(std::string &error);
     [[nodiscard]] LoadEventResult on_chunk_loaded(ChunkPosition position,
                                                    std::string &error);
+    [[nodiscard]] LoadEventResult finalize_persistence(std::string &error);
     void cancel();
 
     [[nodiscard]] void *dimension() const { return dimension_; }
     [[nodiscard]] bool finished() const { return finished_; }
+    [[nodiscard]] bool awaiting_persistence() const
+    {
+        return awaiting_persistence_;
+    }
     [[nodiscard]] bool failed() const { return failed_; }
     [[nodiscard]] JobSnapshot snapshot() const;
 
@@ -54,14 +60,13 @@ private:
     using Clock = std::chrono::steady_clock;
     struct ActiveLease {
         std::shared_ptr<void> chunk;
+        ChunkPosition position;
         bool required;
     };
 
     [[nodiscard]] bool fill_window(std::string &error);
-    [[nodiscard]] bool persist(void *chunk, std::string &error);
     void complete();
     void fail(std::string message, std::string &error);
-    void flush_pending();
 
     void *dimension_;
     native::ChunkSource source_;
@@ -69,13 +74,13 @@ private:
     std::vector<ChunkPosition> positions_;
     std::size_t cursor_{};
     std::size_t window_;
-    std::vector<std::shared_ptr<void>> loaded_;
+    std::vector<ActiveLease> loaded_;
     std::unordered_map<std::uint64_t, ActiveLease> active_;
     std::size_t completed_{};
     std::size_t preloaded_{};
-    std::size_t unflushed_{};
     Clock::time_point started_{Clock::now()};
     Clock::time_point stopped_{};
+    bool awaiting_persistence_{};
     bool finished_{};
     bool failed_{};
 };

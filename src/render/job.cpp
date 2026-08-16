@@ -10,11 +10,6 @@
 #include <utility>
 
 namespace chunklet::render {
-namespace {
-
-constexpr std::size_t kFlushBatch = 4096;
-
-}  // namespace
 
 RenderJob::RenderJob(void *dimension, native::ChunkSource source, ChunkBounds target,
                      std::vector<ChunkPosition> positions, std::size_t window)
@@ -33,12 +28,18 @@ RenderJob::RenderJob(void *dimension, native::ChunkSource source, ChunkBounds ta
 bool RenderJob::start(std::string &error)
 {
     started_ = Clock::now();
-    return fill_window(error);
+    if (!fill_window(error)) {
+        return false;
+    }
+    return true;
 }
 
 LoadEventResult RenderJob::on_chunk_loaded(ChunkPosition position, std::string &error)
 {
     if (finished_ || failed_) {
+        return LoadEventResult::Ignored;
+    }
+    if (awaiting_persistence_) {
         return LoadEventResult::Ignored;
     }
     const auto found = active_.find(chunk_key(position));
@@ -52,22 +53,18 @@ LoadEventResult RenderJob::on_chunk_loaded(ChunkPosition position, std::string &
         return LoadEventResult::Failed;
     }
     const bool required = found->second.required;
-    if (required && !persist(found->second.chunk.get(), error)) {
-        fail(error, error);
-        return LoadEventResult::Failed;
-    }
-    loaded_.push_back(found->second.chunk);
+    loaded_.push_back(found->second);
     active_.erase(found);
     completed_ += required;
     if (completed_ == target_.count()) {
-        complete();
-        return LoadEventResult::Finished;
+        awaiting_persistence_ = true;
+        return LoadEventResult::PersistenceReady;
     }
 
     if (!fill_window(error)) {
         return LoadEventResult::Failed;
     }
-    return finished_ ? LoadEventResult::Finished : LoadEventResult::Progressed;
+    return LoadEventResult::Progressed;
 }
 
 bool RenderJob::fill_window(std::string &error)
@@ -83,23 +80,14 @@ bool RenderJob::fill_window(std::string &error)
             }
             const bool required = target_.contains(position);
             if (native::chunk_state(chunk.get()) == native::kLoadedState) {
-                if (required && !persist(chunk.get(), error)) {
-                    fail(error, error);
-                    return false;
-                }
+                loaded_.push_back(ActiveLease{std::move(chunk), position, required});
                 completed_ += required;
                 preloaded_ += required;
-                if (completed_ == target_.count()) {
-                    complete();
-                    return true;
-                }
-                loaded_.push_back(std::move(chunk));
+                awaiting_persistence_ = completed_ == target_.count();
                 continue;
             }
-            active_.emplace(chunk_key(position), ActiveLease{std::move(chunk), required});
-        }
-        if (completed_ == target_.count()) {
-            complete();
+            active_.emplace(chunk_key(position),
+                            ActiveLease{std::move(chunk), position, required});
         }
         return true;
     } catch (const std::exception &exception) {
@@ -111,59 +99,6 @@ bool RenderJob::fill_window(std::string &error)
     }
 }
 
-bool RenderJob::persist(void *chunk, std::string &error)
-{
-    if (!source_.save(chunk)) {
-        error = "BDS ChunkSource::saveLiveChunk returned false";
-        return false;
-    }
-    ++unflushed_;
-    if (unflushed_ == kFlushBatch) {
-        source_.flush();
-        unflushed_ = 0;
-    }
-    return true;
-}
-
-void RenderJob::flush_pending()
-{
-    if (unflushed_ != 0) {
-        source_.flush();
-        unflushed_ = 0;
-    }
-}
-
-void RenderJob::complete()
-{
-    flush_pending();
-    loaded_.clear();
-    active_.clear();
-    cursor_ = positions_.size();
-    finished_ = true;
-    stopped_ = Clock::now();
-}
-
-void RenderJob::fail(std::string message, std::string &error)
-{
-    error = std::move(message);
-    flush_pending();
-    loaded_.clear();
-    active_.clear();
-    failed_ = true;
-    stopped_ = Clock::now();
-}
-
-void RenderJob::cancel()
-{
-    if (finished_ || failed_) {
-        return;
-    }
-    flush_pending();
-    loaded_.clear();
-    active_.clear();
-    stopped_ = Clock::now();
-    finished_ = true;
-}
 
 JobSnapshot RenderJob::snapshot() const
 {

@@ -13,18 +13,23 @@ have a stable ABI. Use the plugin only with a supported binary.
 | Architecture | x86-64 |
 
 Chunklet stops during plugin enable if the GNU build ID is different. It then
-checks the RTTI names, vtable address points, and target function addresses.
-These checks run before Chunklet reads an Endstone native handle.
+checks the RTTI names, vtable address points, vtable targets, and instruction
+prefixes used by persistence. These checks run before Chunklet reads an
+Endstone native handle.
 
 ## Verified calls
 
 The addresses in this table are ELF virtual addresses before PIE relocation.
 
-| Operation | Vtable slot | Main or world-limit target | Network target |
-| --- | ---: | ---: | ---: |
-| `ChunkSource::getOrLoadChunk` | 9 | `0x0c191870` | `0x0c1503e0` |
-| `ChunkSource::saveLiveChunk` | 20 | `0x0c193650` | `0x0c193650` |
-| `ChunkSource::flushThreadBatch` | 29 | `0x0c193050` | `0x0c193050` |
+| Operation | Dispatch | Target |
+| --- | --- | ---: |
+| `ChunkSource::getOrLoadChunk` (main/world-limit) | vtable slot 9 | `0x0c191870` |
+| `ChunkSource::getOrLoadChunk` (network) | vtable slot 9 | `0x0c1503e0` |
+| `ChunkSource::flushThreadBatch` | vtable slot 29 | `0x0c193050` |
+| `LevelStorageWriteBatch::put` | vtable slot 4 | `0x0c8b7580` |
+| `LevelChunk::markSaveIfNeverSaved` | direct | `0x0c1b8000` |
+| `LevelChunk::setFinalizedState` | direct | `0x0c1984c0` |
+| `DBChunkStorage::_serializeChunk` | direct | `0x0c8e5b10` |
 
 The `getOrLoadChunk` call uses this recovered Linux x86-64 ABI:
 
@@ -38,12 +43,15 @@ void *getOrLoadChunk(
 ```
 
 Chunklet sets `load_mode` to `1` (`Deferred`) and `read_only` to `false`.
-The returned object is a `std::shared_ptr<LevelChunk>`. Chunklet keeps all
-references until every target chunk has a matching Endstone `ChunkLoadEvent`.
+The returned object is a `std::shared_ptr<LevelChunk>`. Chunklet keeps every
+reference until the target chunks emit matching Endstone `ChunkLoadEvent`
+instances in native `Loaded` state (`0x0d` at offset `0xb8`).
 
-The recovered `LevelChunk::ChunkState` byte is at offset `0xb8`. Value `0x0d`
-means `Loaded`. Chunklet requires this value in the load event handler before
-it calls `saveLiveChunk`.
+After the final load event, Chunklet sets finalization state `2`, marks every
+save category dirty, serializes each target column into the server thread's
+native write batch, and inserts the `FinalizedState` (`0x36`) record. It then
+calls `flushThreadBatch`, which commits that batch. Chunklet reports `Complete`
+only after the commit returns.
 
 ## Resolution path
 

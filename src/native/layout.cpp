@@ -56,6 +56,17 @@ void check_slot(void **vtable, int slot, std::uintptr_t expected,
         throw std::runtime_error("BDS vtable slot does not match " + std::string(name));
     }
 }
+template <std::size_t Size>
+void check_code(std::uintptr_t base, std::uintptr_t target,
+                const std::array<unsigned char, Size> &expected,
+                std::string_view name)
+{
+    if (std::memcmp(reinterpret_cast<const void *>(base + target),
+                    expected.data(), expected.size()) != 0) {
+        throw std::runtime_error("BDS code does not match " + std::string(name));
+    }
+}
+
 
 }  // namespace
 
@@ -160,17 +171,39 @@ void verify_layout()
     check_slot(block_source, kBlockSourceChunkSourceSlot, kBlockSourceChunkSourceTarget,
                base, "BlockSource::getChunkSource");
 
-    for (const auto [vtable_address, load_target] :
-         std::array{std::pair{kMainChunkSourceVtable, kMainGetOrLoadTarget},
-                    std::pair{kNetworkChunkSourceVtable, kNetworkGetOrLoadTarget},
-                    std::pair{kWorldLimitChunkSourceVtable, kMainGetOrLoadTarget}}) {
-        auto **vtable = reinterpret_cast<void **>(base + vtable_address);
-        check_slot(vtable, kGetOrLoadSlot, load_target, base, "ChunkSource::getOrLoadChunk");
-        check_slot(vtable, kSaveLiveChunkSlot, kSaveLiveChunkTarget, base,
-                   "ChunkSource::saveLiveChunk");
+    struct ChunkSourceLayout {
+        std::uintptr_t vtable;
+        std::uintptr_t get_or_load;
+    };
+    for (const auto layout :
+         std::array{ChunkSourceLayout{kMainChunkSourceVtable,
+                                      kMainGetOrLoadTarget},
+                    ChunkSourceLayout{kNetworkChunkSourceVtable,
+                                      kNetworkGetOrLoadTarget},
+                    ChunkSourceLayout{kWorldLimitChunkSourceVtable,
+                                      kMainGetOrLoadTarget}}) {
+        auto **vtable = reinterpret_cast<void **>(base + layout.vtable);
+        check_slot(vtable, kGetOrLoadSlot, layout.get_or_load, base,
+                   "ChunkSource::getOrLoadChunk");
         check_slot(vtable, kFlushThreadBatchSlot, kFlushThreadBatchTarget, base,
                    "ChunkSource::flushThreadBatch");
     }
+    auto **write_batch =
+        reinterpret_cast<void **>(base + kLevelStorageWriteBatchVtable);
+    check_slot(write_batch, kWriteBatchPutSlot, kWriteBatchPutTarget, base,
+               "LevelStorageWriteBatch::put");
+    check_code(base, kSerializeChunkTarget,
+               std::array<unsigned char, 10>{
+                   0x55, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41, 0x54, 0x53},
+               "DBChunkStorage::_serializeChunk");
+    check_code(base, kMarkChunkDirtyTarget,
+               std::array<unsigned char, 10>{
+                   0x48, 0xb8, 0xff, 0xff, 0xff, 0x7f, 0xff, 0xff, 0xff, 0x7f},
+               "LevelChunk::markSaveIfNeverSaved");
+    check_code(base, kSetChunkFinalizedTarget,
+               std::array<unsigned char, 7>{
+                   0x89, 0xb7, 0x14, 0x11, 0x00, 0x00, 0xc3},
+               "LevelChunk::setFinalizedState");
 }
 
 int chunk_state(const void *chunk)

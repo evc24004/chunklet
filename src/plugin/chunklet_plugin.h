@@ -34,6 +34,7 @@ private:
     [[nodiscard]] std::optional<StartArguments> parseStart(
         endstone::CommandSender &sender, const std::vector<std::string> &args) const;
     [[nodiscard]] endstone::Dimension *findDimension(endstone::Dimension::Type type) const;
+    void persistActive();
     void finishActive();
     void failActive(const std::string &error);
     [[nodiscard]] static std::string format(const render::JobSnapshot &snapshot);

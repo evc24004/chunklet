@@ -12,14 +12,17 @@ public:
 
     [[nodiscard]] static ChunkSource resolve(void *endstone_dimension);
     [[nodiscard]] std::shared_ptr<void> request(render::ChunkPosition position) const;
-    [[nodiscard]] bool save(void *chunk) const;
-    void flush() const;
+    void begin_persistence() const;
+    void serialize(void *chunk) const;
+    void commit_persistence() const;
     [[nodiscard]] bool valid() const { return handle_ != nullptr; }
 
 private:
-    explicit ChunkSource(void *handle) : handle_(handle) {}
+    ChunkSource(void *handle, void *dimension)
+        : handle_(handle), dimension_(dimension) {}
 
     void *handle_{};
+    void *dimension_{};
 };
 
 }  // namespace chunklet::native

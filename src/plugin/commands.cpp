@@ -140,8 +140,8 @@ void ChunkletPlugin::handleStart(endstone::CommandSender &sender,
         std::string error;
         if (!job_->start(error)) {
             failActive(error);
-        } else if (job_->finished()) {
-            finishActive();
+        } else if (job_->awaiting_persistence()) {
+            persistActive();
         }
     } catch (const std::exception &exception) {
         sender.sendErrorMessage("Chunklet could not start: {}", exception.what());

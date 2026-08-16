@@ -40,6 +40,16 @@ chunklet stop
 The radius is in blocks.
 Valid dimensions are `overworld`, `nether`, and `the_end`.
 
+## Persistence
+
+`Complete` means every target column has been serialized into the Bedrock
+LevelDB write batch and that batch has been committed. The saved records include
+the finalized state, height and biome data, and every generated subchunk.
+
+Chunklet keeps the native chunk leases alive through the commit. A server
+restart can therefore load the target columns from the database instead of
+regenerating them.
+
 See [native compatibility](docs/native-compatibility.md) and
 [performance](docs/performance.md).
 

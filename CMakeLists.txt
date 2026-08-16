@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(chunklet VERSION 0.1.0 LANGUAGES CXX)
+project(chunklet VERSION 0.1.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -29,6 +29,7 @@ endstone_add_plugin(chunklet
     src/plugin/chunklet_plugin.cpp
     src/plugin/commands.cpp
     src/render/job.cpp
+    src/render/persistence.cpp
     src/render/plan.cpp
 )
 target_include_directories(chunklet PRIVATE src)
