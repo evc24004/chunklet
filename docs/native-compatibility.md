@@ -63,7 +63,3 @@ Chunklet resolves the native objects in this order:
 3. Call native `BlockSource` vtable slot `53` to get `ChunkSource`.
 4. Require a known `MainChunkSource`, `NetworkChunkSource`, or
    `WorldLimitChunkSource` vtable.
-
-The implementation does not scan for signatures and does not use a fallback.
-A new BDS release requires a new build ID, a new reverse-engineering review,
-and a new benchmark.

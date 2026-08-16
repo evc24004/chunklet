@@ -39,9 +39,3 @@ The run used fresh terrain. No target chunk was already loaded. Completion
 included the synchronous native database commit. After shutdown, direct
 inspection of the world database confirmed that all 4,096 target columns had
 finalized state, Data3D, and their expected subchunks.
-
-The 500 chunks-per-second target was not reached on this system. The prior
-pre-fix run reported 238.8 chunks per second but measured only target
-`ChunkLoadEvent` completion and did not verify database persistence. The v0.1.1
-result is not directly comparable because the terrain location changed; it
-demonstrates 245.5 chunks per second with complete durable persistence.
