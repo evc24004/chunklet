@@ -32,6 +32,9 @@ struct JobSnapshot {
     std::string native_state_counts;
     double elapsed_seconds{};
     double chunks_per_second{};
+    double request_seconds{};
+    double generation_seconds{};
+    double persistence_seconds{};
     bool finished{};
     bool failed{};
 };
@@ -65,6 +68,7 @@ private:
     };
 
     [[nodiscard]] bool fill_window(std::string &error);
+    [[nodiscard]] bool persist(ActiveLease &lease, std::string &error);
     void complete();
     void fail(std::string message, std::string &error);
 
@@ -78,8 +82,13 @@ private:
     std::unordered_map<std::uint64_t, ActiveLease> active_;
     std::size_t completed_{};
     std::size_t preloaded_{};
+    std::size_t persistence_pending_{};
     Clock::time_point started_{Clock::now()};
     Clock::time_point stopped_{};
+    Clock::time_point requests_finished_{};
+    double request_seconds_{};
+    double generation_seconds_{};
+    double persistence_seconds_{};
     bool awaiting_persistence_{};
     bool finished_{};
     bool failed_{};

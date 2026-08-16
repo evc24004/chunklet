@@ -15,11 +15,12 @@ int block_to_chunk(std::int64_t block)
     }
     return static_cast<int>(-((-block + 15) / 16));
 }
-
 __int128 distance_key(const ChunkBounds &bounds, ChunkPosition position)
 {
-    const auto dx = static_cast<__int128>(position.x) * 2 - bounds.min_x - bounds.max_x;
-    const auto dz = static_cast<__int128>(position.z) * 2 - bounds.min_z - bounds.max_z;
+    const auto dx =
+        static_cast<__int128>(position.x) * 2 - bounds.min_x - bounds.max_x;
+    const auto dz =
+        static_cast<__int128>(position.z) * 2 - bounds.min_z - bounds.max_z;
     return dx * dx + dz * dz;
 }
 

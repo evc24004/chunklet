@@ -23,15 +23,30 @@ RenderJob::RenderJob(void *dimension, native::ChunkSource source, ChunkBounds ta
         throw std::invalid_argument("render window must be positive");
     }
     active_.reserve(std::min(window_, positions_.size()));
+    loaded_.reserve(positions_.size());
 }
 
 bool RenderJob::start(std::string &error)
 {
     started_ = Clock::now();
-    if (!fill_window(error)) {
+    try {
+        const auto persistence_started = Clock::now();
+        source_.begin_persistence();
+        persistence_seconds_ +=
+            std::chrono::duration<double>(Clock::now() - persistence_started).count();
+    } catch (const std::exception &exception) {
+        fail(std::string("native chunk persistence failed: ") + exception.what(), error);
+        return false;
+    } catch (...) {
+        fail("native chunk persistence failed with an unknown error", error);
         return false;
     }
-    return true;
+    const bool started = fill_window(error);
+    requests_finished_ = Clock::now();
+    request_seconds_ =
+        std::chrono::duration<double>(requests_finished_ - started_).count() -
+        persistence_seconds_;
+    return started;
 }
 
 LoadEventResult RenderJob::on_chunk_loaded(ChunkPosition position, std::string &error)
@@ -53,7 +68,10 @@ LoadEventResult RenderJob::on_chunk_loaded(ChunkPosition position, std::string &
         return LoadEventResult::Failed;
     }
     const bool required = found->second.required;
-    loaded_.push_back(found->second);
+    if (required && !persist(found->second, error)) {
+        return LoadEventResult::Failed;
+    }
+    loaded_.push_back(std::move(found->second));
     active_.erase(found);
     completed_ += required;
     if (completed_ == target_.count()) {
@@ -80,9 +98,13 @@ bool RenderJob::fill_window(std::string &error)
             }
             const bool required = target_.contains(position);
             if (native::chunk_state(chunk.get()) == native::kLoadedState) {
-                loaded_.push_back(ActiveLease{std::move(chunk), position, required});
+                ActiveLease lease{std::move(chunk), position, required};
+                if (required && !persist(lease, error)) {
+                    return false;
+                }
                 completed_ += required;
                 preloaded_ += required;
+                loaded_.push_back(std::move(lease));
                 awaiting_persistence_ = completed_ == target_.count();
                 continue;
             }
@@ -140,6 +162,9 @@ JobSnapshot RenderJob::snapshot() const
         .native_state_counts = std::move(state_text),
         .elapsed_seconds = elapsed,
         .chunks_per_second = rate,
+        .request_seconds = request_seconds_,
+        .generation_seconds = generation_seconds_,
+        .persistence_seconds = persistence_seconds_,
         .finished = finished_,
         .failed = failed_,
     };

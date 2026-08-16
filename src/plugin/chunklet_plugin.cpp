@@ -82,17 +82,20 @@ std::string ChunkletPlugin::format(const render::JobSnapshot &snapshot)
                                      static_cast<double>(snapshot.total);
     return std::format(
         "{}/{} chunks ({:.1f}%), {:.1f} chunks/s, {:.2f} s, "
-        "{} active, {} queued, {} preloaded; native states: {} unloaded, "
+        "{} active, {} queued, {} preloaded; phases: {:.2f} s request, "
+        "{:.2f} s generation, {:.2f} s persistence; native states: {} unloaded, "
         "{} generating, {} processing ({})",
         snapshot.completed, snapshot.total, percent, snapshot.chunks_per_second,
         snapshot.elapsed_seconds, snapshot.active, snapshot.queued,
-        snapshot.preloaded, snapshot.native_unloaded, snapshot.native_generating,
-        snapshot.native_processing, snapshot.native_state_counts);
+        snapshot.preloaded, snapshot.request_seconds, snapshot.generation_seconds,
+        snapshot.persistence_seconds, snapshot.native_unloaded,
+        snapshot.native_generating, snapshot.native_processing,
+        snapshot.native_state_counts);
 }
 
 }  // namespace chunklet
 
-ENDSTONE_PLUGIN("chunklet", "0.1.1", chunklet::ChunkletPlugin)
+ENDSTONE_PLUGIN("chunklet", "0.1.2", chunklet::ChunkletPlugin)
 {
     description = "Pre-generate Bedrock chunks with the native BDS chunk loader.";
     website = "https://github.com/evc24004/chunklet";

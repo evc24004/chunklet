@@ -127,8 +127,12 @@ void ChunkletPlugin::handleStart(endstone::CommandSender &sender,
     try {
         const auto bounds = render::square_bounds(parsed->center_x, parsed->center_z,
                                                    parsed->radius);
-        constexpr int generation_halo = 8;
-        auto positions = render::center_out(bounds.expanded(generation_halo));
+        constexpr int generation_halo = 6;
+        auto generation_bounds = bounds.expanded(generation_halo);
+        ++generation_bounds.min_z;
+        --generation_bounds.max_x;
+        --generation_bounds.max_z;
+        auto positions = render::center_out(generation_bounds);
         const auto window = positions.size();
         auto source = native::ChunkSource::resolve(dimension);
         job_.emplace(dimension, source, bounds, std::move(positions), window);

@@ -13,21 +13,16 @@ constexpr std::size_t kFlushBatch = 4096;
 LoadEventResult RenderJob::finalize_persistence(std::string &error)
 {
     try {
-        source_.begin_persistence();
-        std::size_t pending = 0;
-        for (const auto &lease : loaded_) {
-            if (!lease.required) {
-                continue;
-            }
-            source_.serialize(lease.chunk.get());
-            if (++pending == kFlushBatch) {
-                source_.commit_persistence();
-                pending = 0;
-            }
-        }
-        if (pending != 0) {
+        if (persistence_pending_ != 0) {
+            const auto persistence_started = Clock::now();
             source_.commit_persistence();
+            persistence_seconds_ +=
+                std::chrono::duration<double>(Clock::now() - persistence_started).count();
+            persistence_pending_ = 0;
         }
+        const auto elapsed =
+            std::chrono::duration<double>(Clock::now() - started_).count();
+        generation_seconds_ = elapsed - request_seconds_ - persistence_seconds_;
         complete();
         return LoadEventResult::Finished;
     } catch (const std::exception &exception) {
@@ -36,6 +31,31 @@ LoadEventResult RenderJob::finalize_persistence(std::string &error)
     } catch (...) {
         fail("native chunk persistence failed with an unknown error", error);
         return LoadEventResult::Failed;
+    }
+}
+
+bool RenderJob::persist(ActiveLease &lease, std::string &error)
+{
+    const auto persistence_started = Clock::now();
+    try {
+        source_.serialize(lease.chunk.get());
+        if (++persistence_pending_ == kFlushBatch) {
+            source_.commit_persistence();
+            persistence_pending_ = 0;
+        }
+        persistence_seconds_ +=
+            std::chrono::duration<double>(Clock::now() - persistence_started).count();
+        return true;
+    } catch (const std::exception &exception) {
+        persistence_seconds_ +=
+            std::chrono::duration<double>(Clock::now() - persistence_started).count();
+        fail(std::string("native chunk persistence failed: ") + exception.what(), error);
+        return false;
+    } catch (...) {
+        persistence_seconds_ +=
+            std::chrono::duration<double>(Clock::now() - persistence_started).count();
+        fail("native chunk persistence failed with an unknown error", error);
+        return false;
     }
 }
 
