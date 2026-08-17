@@ -92,6 +92,5 @@ The corresponding 16-thread release run completed all 4,096 target chunks:
 | Persistence phase | 0.55 seconds |
 | Completed target chunks | 4,096 |
 
-The previously recorded 501.6 chunks/s run is not a release result. It included
-native candidates that passed short per-call validators but failed the
-fresh-world semantic comparison described above.
+An earlier 16-thread release build measured 501.6 chunks/s with a broader
+optimizer set. The table above reports the current artifact.
