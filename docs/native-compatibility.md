@@ -30,12 +30,13 @@ bounded results plus the final state against the BDS virtual `nextInt`
 implementation. An unknown RNG implementation or failed comparison uses the
 original virtual calls. Plugin disable restores the original instruction bytes.
 
-## Area evaluator optimization
+## Native evaluator optimizations
 
-Chunklet installs its AVX2 area evaluator on the supported BDS build. The hook
-verifies the pinned target instructions and compares its initial live calls
-bit-for-bit against the original BDS implementation. A mismatch immediately
-restores the original result and permanently disables the evaluator.
+Chunklet installs AVX2 area and containment evaluators on the supported BDS
+build. Each hook verifies the pinned target instructions and compares its
+initial live calls bit-for-bit against the original BDS implementation. A
+mismatch immediately restores the original result and permanently disables the
+affected evaluator.
 
 ## Verified calls
 

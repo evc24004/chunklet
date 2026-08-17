@@ -9,6 +9,7 @@
 #include "noise/construction/reserve.h"
 #include "noise/shuffle/optimizer.h"
 #include "timing/monotonic/optimizer.h"
+#include "spatial/containment/optimizer.h"
 
 #include <format>
 
@@ -25,9 +26,11 @@ void ChunkletPlugin::onLoad()
         allocation::transient::install();
         noise::construction::install();
         noise::construction::install_direct();
+        spatial::containment::install();
         noise::shuffle::install();
     } catch (...) {
         noise::shuffle::remove();
+        spatial::containment::remove();
         noise::construction::remove_direct();
         noise::construction::remove();
         allocation::transient::remove();
@@ -46,7 +49,7 @@ void ChunkletPlugin::onEnable()
         "Native chunk loader, cached ownership resolution, scalable shared mutexes, "
         "transient terrain object pool, validated direct noise construction, "
         "preallocated noise output, fused noise shuffle, and validated AVX2 area "
-        "evaluation ready: BDS build ID {}.",
+        "and containment evaluation ready: BDS build ID {}.",
         native::kSupportedBuildId);
 }
 
@@ -66,6 +69,18 @@ void ChunkletPlugin::onDisable()
         getLogger().info(
             "AVX2 area evaluator: {} bit-exact validations.",
             noise::area::validation_count());
+    }
+    const auto containment_mismatches =
+        spatial::containment::mismatch_count();
+    if (containment_mismatches != 0) {
+        getLogger().error(
+            "AVX2 containment evaluator disabled after {} bit-exact "
+            "validation mismatch(es).",
+            containment_mismatches);
+    } else {
+        getLogger().info(
+            "AVX2 containment evaluator: {} bit-exact validations.",
+            spatial::containment::validation_count());
     }
     const auto construction = noise::construction::direct_stats();
     if (construction.mismatches != 0) {
@@ -99,6 +114,7 @@ void ChunkletPlugin::onDisable()
             timing::monotonic::maximum_error_ns());
     }
     noise::shuffle::remove();
+    spatial::containment::remove();
     noise::construction::remove_direct();
     noise::construction::remove();
     allocation::transient::remove();
@@ -180,7 +196,7 @@ std::string ChunkletPlugin::format(const render::JobSnapshot &snapshot)
 
 }  // namespace chunklet
 
-ENDSTONE_PLUGIN("chunklet", "0.1.5", chunklet::ChunkletPlugin)
+ENDSTONE_PLUGIN("chunklet", "0.1.6", chunklet::ChunkletPlugin)
 {
     description = "Pre-generate Bedrock chunks with the native BDS chunk loader.";
     website = "https://github.com/evc24004/chunklet";

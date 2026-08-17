@@ -8,16 +8,16 @@
 | World seed | `-809623823` | `-809623823` |
 | Target chunks | 4,096 | 4,096 |
 | Completed chunks | 4,096 | 4,096 |
-| Total time | 12.98 s | 7.87 s |
-| Throughput | 315.6 chunks/s | 520.6 chunks/s |
+| Total time | 12.98 s | 7.80 s |
+| Throughput | 315.6 chunks/s | 525.3 chunks/s |
 | Request phase | 0.11 s | 0.02 s |
-| Generation phase | 12.08 s | 7.03 s |
-| Persistence phase | 0.78 s | 0.80 s |
-| Throughput improvement | — | 65.0% |
+| Generation phase | 12.08 s | 7.00 s |
+| Persistence phase | 0.78 s | 0.76 s |
+| Throughput improvement | — | 66.4% |
 
-The Chunklet result is a fresh-world release run on 2026-08-15 using Endstone 0.11.7 and a 500-block square radius centered at `0,0` in the Overworld (`-32..31` on each axis). The run sustained 520.6 chunks/s across all 4,096 requested columns.
+The Chunklet result is a fresh-world release run on 2026-08-15 using Endstone 0.11.7 and a 500-block square radius centered at `0,0` in the Overworld (`-32..31` on each axis). The run sustained 525.3 chunks/s across all 4,096 requested columns.
 
-Post-shutdown validation inspected every requested database column: 4,096/4,096 were finalized, contained Data3D, and had generated subchunk height coverage. A semantic comparator decoded every palette and expanded all 38,493 persisted subchunks to per-block state sequences. Against two independent stock worlds, the optimized world had 3,382 and 3,363 differing subchunks, with zero missing records and zero parse failures; the two stock worlds differed in 3,354 subchunks. The optimized result therefore remained within fresh-world stock nondeterminism rather than introducing a new terrain family. Runtime validators also reported 8/8 bit-exact area evaluations, 16/16 direct-construction validations across 420 calls, and 4,096/4,096 monotonic-clock validations.
+Post-shutdown validation inspected every requested database column: 4,096/4,096 were finalized, contained Data3D, and had generated subchunk height coverage. A semantic comparator decoded every palette and expanded all 38,493 persisted subchunks to per-block state sequences. The release world differed from stock in 3,386 subchunks, while two independent release worlds differed in 3,341 and two stock worlds differed in 3,354, with zero missing records and zero parse failures. Runtime validators reported 8/8 bit-exact area evaluations, 65/65 bit-exact containment evaluations, 16/16 direct-construction validations across 420 calls, and 4,096/4,096 monotonic-clock validations. An exhaustive containment proof also matched all 23,347,200 live evaluations bit-for-bit.
 
 ## Chunkize comparison
 
@@ -26,11 +26,11 @@ Benchmark run on 2026-08-15 against [Chunkize V1.0.4](https://github.com/ozorica
 | Metric | Chunkize | Chunklet |
 | --- | ---: | ---: |
 | Reported processed chunks | 4,096 | 4,096 |
-| Command completion time | 44 s | 7.87 s |
-| Reported throughput | ~93.1 chunks/s | 520.6 chunks/s |
+| Command completion time | 44 s | 7.80 s |
+| Reported throughput | ~93.1 chunks/s | 525.3 chunks/s |
 | Serviceable persisted columns | 4,046/4,096 | 4,096/4,096 |
-| Throughput multiple | 1.00x | 5.59x |
+| Throughput multiple | 1.00x | 5.64x |
 
-Chunklet completed in 82.1% less time and delivered 459.2% more throughput. Post-shutdown database inspection required each requested column to have finalized state `2`, at least 512 bytes of Data3D, and generated subchunk height coverage. Chunklet passed all 4,096 columns. Chunkize reported all chunks processed, but 50 columns were not finalized, so it did not achieve a valid full-completion time in this run.
+Chunklet completed in 82.3% less time and delivered 464.3% more throughput. Post-shutdown database inspection required each requested column to have finalized state `2`, at least 512 bytes of Data3D, and generated subchunk height coverage. Chunklet passed all 4,096 columns. Chunkize reported all chunks processed, but 50 columns were not finalized, so it did not achieve a valid full-completion time in this run.
 
 For completeness, [Chunkize main at `05c4790`](https://github.com/ozorical/Chunkize/commit/05c479053f2fcec2a38b3fa44d6a42d7fc1ad5ba) reported 39 seconds under the same setup, but only 713/4,096 requested columns were present after shutdown; that result is disqualified from the comparison.
