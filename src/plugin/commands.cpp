@@ -11,6 +11,10 @@
 
 namespace chunklet {
 namespace {
+// Bound the validated 4,096-column workload; larger jobs retain the original
+// all-at-once center-out scheduler rather than risking an incomplete frontier.
+constexpr std::size_t max_active_generation_requests = 1'536;
+constexpr std::uint64_t bounded_generation_target_limit = 4'096;
 
 bool parse_integer(std::string_view text, int &value)
 {
@@ -132,8 +136,14 @@ void ChunkletPlugin::handleStart(endstone::CommandSender &sender,
         ++generation_bounds.min_z;
         --generation_bounds.max_x;
         --generation_bounds.max_z;
-        auto positions = render::center_out(generation_bounds);
-        const auto window = positions.size();
+        const bool bounded_generation =
+            bounds.count() <= bounded_generation_target_limit;
+        auto positions = bounded_generation
+            ? render::morton_order(generation_bounds)
+            : render::center_out(generation_bounds);
+        const auto window = bounded_generation
+            ? std::min(positions.size(), max_active_generation_requests)
+            : positions.size();
         auto source = native::ChunkSource::resolve(dimension);
         job_.emplace(dimension, source, bounds, std::move(positions), window);
         sender.sendMessage(

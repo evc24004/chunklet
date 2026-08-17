@@ -8,12 +8,18 @@
 | World seed | `-809623823` | `-809623823` |
 | Target chunks | 4,096 | 4,096 |
 | Completed chunks | 4,096 | 4,096 |
-| Total time | 12.98 s | 9.31 s |
-| Throughput | 315.6 chunks/s | 440.1 chunks/s |
-| Request phase | 0.11 s | 0.10 s |
-| Generation phase | 12.08 s | 8.72 s |
-| Persistence phase | 0.78 s | 0.47 s |
-| Throughput improvement | — | 39.4% |
+| Total time | 12.98 s | 7.87 s |
+| Throughput | 315.6 chunks/s | 520.6 chunks/s |
+| Request phase | 0.11 s | 0.02 s |
+| Generation phase | 12.08 s | 7.03 s |
+| Persistence phase | 0.78 s | 0.80 s |
+| Throughput improvement | — | 65.0% |
+
+The Chunklet result is a fresh-world release run on 2026-08-15 using Endstone 0.11.7 and a 500-block square radius centered at `0,0` in the Overworld (`-32..31` on each axis). The run sustained 520.6 chunks/s across all 4,096 requested columns.
+
+Post-shutdown validation inspected every requested database column: 4,096/4,096 were finalized, contained Data3D, and had generated subchunk height coverage. A semantic comparator decoded every palette and expanded all 38,493 persisted subchunks to per-block state sequences. Against two independent stock worlds, the optimized world had 3,382 and 3,363 differing subchunks, with zero missing records and zero parse failures; the two stock worlds differed in 3,354 subchunks. The optimized result therefore remained within fresh-world stock nondeterminism rather than introducing a new terrain family. Runtime validators also reported 8/8 bit-exact area evaluations, 16/16 direct-construction validations across 420 calls, and 4,096/4,096 monotonic-clock validations.
+
+Perlin, octave, and proximity evaluator hooks are deliberately not installed: fresh-world semantic comparison found terrain deviations even when their sampled function-level validators passed. The 520.6 chunks/s result keeps those unsafe hooks disabled.
 
 ## Chunkize comparison
 

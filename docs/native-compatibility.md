@@ -32,11 +32,15 @@ original virtual calls. Plugin disable restores the original instruction bytes.
 
 ## Native evaluator optimizations
 
-Chunklet automatically installs its AVX2 proximity, Perlin, and multi-octave
-evaluators on the supported BDS build. Each hook verifies the pinned target
-instructions and compares its initial live calls against the original BDS
-implementation. A mismatch immediately restores the original result and
-permanently disables that evaluator. There is no user-facing configuration.
+Chunklet installs its AVX2 area evaluator on the supported BDS build. The hook
+verifies the pinned target instructions and compares its initial live calls
+bit-for-bit against the original BDS implementation. A mismatch immediately
+restores the original result and permanently disables the evaluator.
+
+The available proximity, Perlin, and multi-octave evaluators are not installed.
+Fresh-world semantic validation found terrain deviations that their sampled
+function-level comparisons did not detect, so preserving stock terrain takes
+precedence over their benchmark gain. There is no user-facing configuration.
 
 ## Verified calls
 

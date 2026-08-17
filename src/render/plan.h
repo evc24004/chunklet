@@ -24,6 +24,8 @@ struct ChunkBounds {
 };
 
 [[nodiscard]] ChunkBounds square_bounds(int center_x, int center_z, int radius);
+[[nodiscard]] std::vector<ChunkPosition> row_major_order(const ChunkBounds &bounds);
+[[nodiscard]] std::vector<ChunkPosition> morton_order(const ChunkBounds &bounds);
 [[nodiscard]] std::vector<ChunkPosition> center_out(const ChunkBounds &bounds);
 [[nodiscard]] std::uint64_t chunk_key(ChunkPosition position);
 

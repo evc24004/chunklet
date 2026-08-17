@@ -15,6 +15,7 @@ int block_to_chunk(std::int64_t block)
     }
     return static_cast<int>(-((-block + 15) / 16));
 }
+
 __int128 distance_key(const ChunkBounds &bounds, ChunkPosition position)
 {
     const auto dx =
@@ -22,6 +23,25 @@ __int128 distance_key(const ChunkBounds &bounds, ChunkPosition position)
     const auto dz =
         static_cast<__int128>(position.z) * 2 - bounds.min_z - bounds.max_z;
     return dx * dx + dz * dz;
+}
+
+std::uint64_t spread_bits(std::uint32_t value)
+{
+    std::uint64_t bits = value;
+    bits = (bits | bits << 16) & 0x0000ffff0000ffffULL;
+    bits = (bits | bits << 8) & 0x00ff00ff00ff00ffULL;
+    bits = (bits | bits << 4) & 0x0f0f0f0f0f0f0f0fULL;
+    bits = (bits | bits << 2) & 0x3333333333333333ULL;
+    return (bits | bits << 1) & 0x5555555555555555ULL;
+}
+
+std::uint64_t morton_key(const ChunkBounds &bounds, ChunkPosition position)
+{
+    const auto x = static_cast<std::uint32_t>(
+        static_cast<std::int64_t>(position.x) - bounds.min_x);
+    const auto z = static_cast<std::uint32_t>(
+        static_cast<std::int64_t>(position.z) - bounds.min_z);
+    return spread_bits(x) | spread_bits(z) << 1;
 }
 
 }  // namespace
@@ -73,7 +93,7 @@ ChunkBounds square_bounds(int center_x, int center_z, int radius)
             block_to_chunk(max_x), block_to_chunk(max_z)};
 }
 
-std::vector<ChunkPosition> center_out(const ChunkBounds &bounds)
+std::vector<ChunkPosition> row_major_order(const ChunkBounds &bounds)
 {
     if (bounds.min_x > bounds.max_x || bounds.min_z > bounds.max_z) {
         throw std::invalid_argument("chunk bounds are empty");
@@ -96,6 +116,21 @@ std::vector<ChunkPosition> center_out(const ChunkBounds &bounds)
             break;
         }
     }
+    return positions;
+}
+
+std::vector<ChunkPosition> morton_order(const ChunkBounds &bounds)
+{
+    auto positions = row_major_order(bounds);
+    std::sort(positions.begin(), positions.end(), [&](const auto &left, const auto &right) {
+        return morton_key(bounds, left) < morton_key(bounds, right);
+    });
+    return positions;
+}
+
+std::vector<ChunkPosition> center_out(const ChunkBounds &bounds)
+{
+    auto positions = row_major_order(bounds);
     std::sort(positions.begin(), positions.end(), [&](const auto &left, const auto &right) {
         const auto left_distance = distance_key(bounds, left);
         const auto right_distance = distance_key(bounds, right);
