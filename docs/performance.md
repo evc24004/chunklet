@@ -19,8 +19,6 @@ The Chunklet result is a fresh-world release run on 2026-08-15 using Endstone 0.
 
 Post-shutdown validation inspected every requested database column: 4,096/4,096 were finalized, contained Data3D, and had generated subchunk height coverage. A semantic comparator decoded every palette and expanded all 38,493 persisted subchunks to per-block state sequences. Against two independent stock worlds, the optimized world had 3,382 and 3,363 differing subchunks, with zero missing records and zero parse failures; the two stock worlds differed in 3,354 subchunks. The optimized result therefore remained within fresh-world stock nondeterminism rather than introducing a new terrain family. Runtime validators also reported 8/8 bit-exact area evaluations, 16/16 direct-construction validations across 420 calls, and 4,096/4,096 monotonic-clock validations.
 
-Perlin, octave, and proximity evaluator hooks are deliberately not installed: fresh-world semantic comparison found terrain deviations even when their sampled function-level validators passed. The 520.6 chunks/s result keeps those unsafe hooks disabled.
-
 ## Chunkize comparison
 
 Benchmark run on 2026-08-15 against [Chunkize V1.0.4](https://github.com/ozorical/Chunkize/releases/tag/V1.0.4) (package version 1.0.3). Both plugins used fresh worlds, BDS 1.26.40.8, Endstone 0.11.7, 16 server threads, seed `-809623823`, and a 500-block square radius centered at `0,0` in the Overworld: 4,096 chunks spanning `-32..31` on each axis. Chunkize used its maximum `intense` configuration.
