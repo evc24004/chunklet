@@ -8,9 +8,9 @@
 | World seed | `-809623823` | `-809623823` |
 | Target chunks | 4,096 | 4,096 |
 | Completed chunks | 4,096 | 4,096 |
-| Total time | 12.98 s | 11.80 s |
-| Throughput | 315.6 chunks/s | 347.2 chunks/s |
+| Total time | 12.98 s | 9.31 s |
+| Throughput | 315.6 chunks/s | 440.1 chunks/s |
 | Request phase | 0.11 s | 0.10 s |
-| Generation phase | 12.08 s | 10.94 s |
-| Persistence phase | 0.78 s | 0.74 s |
-| Throughput improvement | — | 10.0% |
+| Generation phase | 12.08 s | 8.72 s |
+| Persistence phase | 0.78 s | 0.47 s |
+| Throughput improvement | — | 39.4% |

@@ -7,7 +7,10 @@
 #include "noise/area/optimizer.h"
 #include "noise/construction/direct.h"
 #include "noise/construction/reserve.h"
+#include "noise/perlin/octave_optimizer.h"
+#include "noise/perlin/optimizer.h"
 #include "noise/shuffle/optimizer.h"
+#include "spatial/proximity/optimizer.h"
 #include "timing/monotonic/optimizer.h"
 
 #include <format>
@@ -24,11 +27,17 @@ void ChunkletPlugin::onLoad()
         synchronization::shared_mutex::install();
         allocation::transient::install();
         noise::construction::install();
+        spatial::proximity::install();
         noise::construction::install_direct();
+        noise::perlin::install();
+        noise::perlin::install_octaves();
         noise::shuffle::install();
     } catch (...) {
         noise::shuffle::remove();
+        noise::perlin::remove_octaves();
+        noise::perlin::remove();
         noise::construction::remove_direct();
+        spatial::proximity::remove();
         noise::construction::remove();
         allocation::transient::remove();
         synchronization::shared_mutex::remove();
@@ -45,8 +54,8 @@ void ChunkletPlugin::onEnable()
     getLogger().info(
         "Native chunk loader, cached ownership resolution, scalable shared mutexes, "
         "transient terrain object pool, validated direct noise construction, "
-        "preallocated noise output, fused noise shuffle, and validated AVX2 area "
-        "evaluation ready: BDS build ID {}.",
+        "preallocated noise output, fused noise shuffle, and validated AVX2 area, "
+        "proximity, Perlin, and octave evaluation ready: BDS build ID {}.",
         native::kSupportedBuildId);
 }
 
@@ -66,6 +75,36 @@ void ChunkletPlugin::onDisable()
         getLogger().info(
             "AVX2 area evaluator: {} bit-exact validations.",
             noise::area::validation_count());
+    }
+    const auto proximity_mismatches = spatial::proximity::mismatch_count();
+    if (proximity_mismatches != 0) {
+        getLogger().error(
+            "AVX2 proximity evaluator disabled after {} exact mismatch(es).",
+            proximity_mismatches);
+    } else {
+        getLogger().info(
+            "AVX2 proximity evaluator: {} exact validations.",
+            spatial::proximity::validation_count());
+    }
+    const auto perlin_mismatches = noise::perlin::mismatch_count();
+    if (perlin_mismatches != 0) {
+        getLogger().error(
+            "AVX2 Perlin evaluator disabled after {} bit-exact validation mismatch(es).",
+            perlin_mismatches);
+    } else {
+        getLogger().info(
+            "AVX2 Perlin evaluator: {} bit-exact validations.",
+            noise::perlin::validation_count());
+    }
+    const auto octave_mismatches = noise::perlin::octave_mismatch_count();
+    if (octave_mismatches != 0) {
+        getLogger().error(
+            "AVX2 octave evaluator disabled after {} bit-exact validation mismatch(es).",
+            octave_mismatches);
+    } else {
+        getLogger().info(
+            "AVX2 octave evaluator: {} bit-exact validations.",
+            noise::perlin::octave_validation_count());
     }
     const auto construction = noise::construction::direct_stats();
     if (construction.mismatches != 0) {
@@ -98,7 +137,11 @@ void ChunkletPlugin::onDisable()
             timing::monotonic::validation_count(),
             timing::monotonic::maximum_error_ns());
     }
+    noise::shuffle::remove();
+    noise::perlin::remove_octaves();
+    noise::perlin::remove();
     noise::construction::remove_direct();
+    spatial::proximity::remove();
     noise::construction::remove();
     allocation::transient::remove();
     synchronization::shared_mutex::remove();

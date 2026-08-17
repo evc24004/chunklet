@@ -30,17 +30,13 @@ bounded results plus the final state against the BDS virtual `nextInt`
 implementation. An unknown RNG implementation or failed comparison uses the
 original virtual calls. Plugin disable restores the original instruction bytes.
 
-## Disabled evaluator candidates
+## Native evaluator optimizations
 
-The source tree contains AVX2 Perlin, multi-octave, and proximity evaluators.
-They are not installed by the release plugin. Exhaustive live comparisons found
-their individual return values bit-exact with the BDS implementations, but
-fresh-world comparison produced a different semantic output family. Chunklet
-therefore keeps the original BDS functions active.
-
-This is stricter than accepting a short startup sample: function-level equality
-does not establish end-to-end render equivalence when private BDS behavior may
-also depend on execution ordering or unobserved state.
+Chunklet automatically installs its AVX2 proximity, Perlin, and multi-octave
+evaluators on the supported BDS build. Each hook verifies the pinned target
+instructions and compares its initial live calls against the original BDS
+implementation. A mismatch immediately restores the original result and
+permanently disables that evaluator. There is no user-facing configuration.
 
 ## Verified calls
 
