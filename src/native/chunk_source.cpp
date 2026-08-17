@@ -137,7 +137,7 @@ ChunkSource ChunkSource::resolve(void *endstone_dimension)
         throw std::runtime_error("BDS ChunkSource does not match the supported layout: " +
                                  std::string(name == nullptr ? "<null>" : name));
     }
-    return ChunkSource(chunk_source, dimension);
+    return ChunkSource(chunk_source, dimension, base);
 }
 
 std::shared_ptr<void> ChunkSource::request(render::ChunkPosition position) const
@@ -154,15 +154,14 @@ std::shared_ptr<void> ChunkSource::request(render::ChunkPosition position) const
 }
 
 
-void ChunkSource::begin_persistence() const
+void ChunkSource::begin_persistence()
 {
-    const auto base = executable_base();
-    db_storage(handle_, base);
+    storage_ = db_storage(handle_, base_);
     auto **vtable = *reinterpret_cast<void ***>(handle_);
     using FlushThreadBatch = void (*)(void *);
     reinterpret_cast<FlushThreadBatch>(
         vtable[kFlushThreadBatchSlot])(handle_);
-    current_write_batch(base);
+    batch_ = current_write_batch(base_);
 }
 
 
@@ -171,9 +170,9 @@ void ChunkSource::serialize(void *chunk) const
     if (chunk == nullptr) {
         throw std::invalid_argument("cannot persist a null LevelChunk");
     }
-    const auto base = executable_base();
-    auto *storage = db_storage(handle_, base);
-    auto *batch = current_write_batch(base);
+    const auto base = base_;
+    auto *storage = storage_;
+    auto *batch = batch_;
     using SetChunkFinalized = void (*)(void *, int);
     reinterpret_cast<SetChunkFinalized>(
         base + kSetChunkFinalizedTarget)(chunk, 2);

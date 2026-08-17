@@ -1,8 +1,14 @@
 #include "plugin/chunklet_plugin.h"
 
+#include "allocation/transient/object_pool.h"
+#include "cache/ownership/optimizer.h"
+#include "synchronization/shared_mutex/optimizer.h"
 #include "native/layout.h"
-#include "noise/interpolation/optimizer.h"
+#include "noise/area/optimizer.h"
+#include "noise/construction/direct.h"
+#include "noise/construction/reserve.h"
 #include "noise/shuffle/optimizer.h"
+#include "timing/monotonic/optimizer.h"
 
 #include <format>
 
@@ -11,11 +17,24 @@ namespace chunklet {
 void ChunkletPlugin::onLoad()
 {
     native::verify_layout();
-    noise::interpolation::install();
+    noise::area::install();
     try {
+        timing::monotonic::install();
+        cache::ownership::install();
+        synchronization::shared_mutex::install();
+        allocation::transient::install();
+        noise::construction::install();
+        noise::construction::install_direct();
         noise::shuffle::install();
     } catch (...) {
-        noise::interpolation::remove();
+        noise::shuffle::remove();
+        noise::construction::remove_direct();
+        noise::construction::remove();
+        allocation::transient::remove();
+        synchronization::shared_mutex::remove();
+        cache::ownership::remove();
+        timing::monotonic::remove();
+        noise::area::remove();
         throw;
     }
 }
@@ -24,8 +43,10 @@ void ChunkletPlugin::onEnable()
 {
     registerEvent(&ChunkletPlugin::onChunkLoad, *this);
     getLogger().info(
-        "Native chunk loader, fused noise shuffle, and AVX2 octave evaluator ready: "
-        "BDS build ID {}.",
+        "Native chunk loader, cached ownership resolution, scalable shared mutexes, "
+        "transient terrain object pool, validated direct noise construction, "
+        "preallocated noise output, fused noise shuffle, and validated AVX2 area "
+        "evaluation ready: BDS build ID {}.",
         native::kSupportedBuildId);
 }
 
@@ -36,14 +57,54 @@ void ChunkletPlugin::onDisable()
         last_ = job_->snapshot();
         job_.reset();
     }
-    const auto interpolation_mismatches = noise::interpolation::mismatch_count();
-    if (interpolation_mismatches != 0) {
+    const auto area_mismatches = noise::area::mismatch_count();
+    if (area_mismatches != 0) {
         getLogger().error(
-            "AVX2 octave evaluator disabled after {} bit-exact validation mismatch(es).",
-            interpolation_mismatches);
+            "AVX2 area evaluator disabled after {} bit-exact validation mismatch(es).",
+            area_mismatches);
+    } else {
+        getLogger().info(
+            "AVX2 area evaluator: {} bit-exact validations.",
+            noise::area::validation_count());
     }
-    noise::interpolation::remove();
-    noise::shuffle::remove();
+    const auto construction = noise::construction::direct_stats();
+    if (construction.mismatches != 0) {
+        getLogger().error(
+            "Direct noise construction disabled after {} bit-exact mismatch(es): "
+            "mode={}, element={}, offset=0x{:x}, expected=0x{:x}, actual=0x{:x}.",
+            construction.mismatches, construction.mismatch_mode,
+            construction.mismatch_element, construction.mismatch_offset,
+            construction.mismatch_expected, construction.mismatch_actual);
+    } else {
+        getLogger().info(
+            "Direct noise construction: {} validations from {} calls; "
+            "{} mode-zero, {} recognized-random, {} supported-shape.",
+            construction.validations, construction.calls, construction.mode_zero,
+            construction.random_matches, construction.shape_matches);
+        getLogger().info(
+            "Mode-zero random methods: nextInt=0x{:x}, nextDouble=0x{:x}, "
+            "consume=0x{:x}.",
+            construction.next_int, construction.next_double, construction.consume);
+    }
+    const auto clock_mismatches = timing::monotonic::mismatch_count();
+    if (clock_mismatches != 0) {
+        getLogger().error(
+            "TSC monotonic clock disabled after {} validation mismatch(es); "
+            "maximum error={} ns.",
+            clock_mismatches, timing::monotonic::maximum_error_ns());
+    } else {
+        getLogger().info(
+            "TSC monotonic clock: {} validations, maximum error={} ns.",
+            timing::monotonic::validation_count(),
+            timing::monotonic::maximum_error_ns());
+    }
+    noise::construction::remove_direct();
+    noise::construction::remove();
+    allocation::transient::remove();
+    synchronization::shared_mutex::remove();
+    cache::ownership::remove();
+    timing::monotonic::remove();
+    noise::area::remove();
 }
 
 void ChunkletPlugin::onChunkLoad(const endstone::ChunkLoadEvent &event)

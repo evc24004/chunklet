@@ -30,19 +30,17 @@ bounded results plus the final state against the BDS virtual `nextInt`
 implementation. An unknown RNG implementation or failed comparison uses the
 original virtual calls. Plugin disable restores the original instruction bytes.
 
-## Multi-octave interpolation optimization
+## Disabled evaluator candidates
 
-Chunklet replaces the build-pinned `MultiOctaveNoiseImpl<false>` normalized
-evaluator with an AVX2 implementation. It evaluates the eight gradient corners
-together and uses byte shuffles instead of scalar gradient-table loads. The
-outer evaluator also removes repeated library calls and intermediate stack
-traffic while preserving the original operation order.
+The source tree contains AVX2 Perlin, multi-octave, and proximity evaluators.
+They are not installed by the release plugin. Exhaustive live comparisons found
+their individual return values bit-exact with the BDS implementations, but
+fresh-world comparison produced a different semantic output family. Chunklet
+therefore keeps the original BDS functions active.
 
-Before patching, Chunklet verifies the original 14-byte function prefix. A
-trampoline retains the complete BDS implementation, and the first 4,096 live
-evaluations compare the original and optimized float results bit for bit. Any
-mismatch permanently selects the original implementation. Plugin disable
-restores the original instruction bytes.
+This is stricter than accepting a short startup sample: function-level equality
+does not establish end-to-end render equivalence when private BDS behavior may
+also depend on execution ordering or unobserved state.
 
 ## Verified calls
 

@@ -108,38 +108,6 @@ void fallback_shuffle(void *random, unsigned char *values, void *target)
     }
 }
 
-extern "C" void fused_shuffle(void *random, unsigned char *values)
-{
-    auto **vtable = *reinterpret_cast<void ***>(random);
-    if (reinterpret_cast<std::uintptr_t>(vtable[3]) != base + kNextInt) {
-        fallback_shuffle(random, values, vtable[3]);
-        return;
-    }
-    int state = verification.load(std::memory_order_acquire);
-    if (state == 0) {
-        state = verify_xoroshiro(random) ? 1 : -1;
-        int expected = 0;
-        verification.compare_exchange_strong(
-            expected, state, std::memory_order_release, std::memory_order_acquire);
-        state = verification.load(std::memory_order_acquire);
-    }
-    if (state != 1) {
-        fallback_shuffle(random, values, vtable[3]);
-        return;
-    }
-    auto first = *reinterpret_cast<std::uint64_t *>(
-        static_cast<unsigned char *>(random) + 8);
-    auto second = *reinterpret_cast<std::uint64_t *>(
-        static_cast<unsigned char *>(random) + 0x10);
-    for (std::uint32_t index = 0; index < 256; ++index) {
-        const auto selected = index + next_xoroshiro(first, second, 256 - index);
-        std::swap(values[index], values[selected]);
-    }
-    *reinterpret_cast<std::uint64_t *>(
-        static_cast<unsigned char *>(random) + 8) = first;
-    *reinterpret_cast<std::uint64_t *>(
-        static_cast<unsigned char *>(random) + 0x10) = second;
-}
 
 std::pair<void *, std::size_t> pages(const Region &region)
 {
@@ -178,7 +146,7 @@ void write_region(const Region &region, bool optimize)
     cursor += sizeof(region.stack_offset);
     target[cursor++] = 0x48;
     target[cursor++] = 0xb8;
-    const auto helper = reinterpret_cast<std::uintptr_t>(&fused_shuffle);
+    const auto helper = reinterpret_cast<std::uintptr_t>(&shuffle_values);
     std::memcpy(target + cursor, &helper, sizeof(helper));
     cursor += sizeof(helper);
     const unsigned char suffix[] = {0xff, 0xd0, 0x31, 0xdb, 0x41,
@@ -211,6 +179,38 @@ void make_executable() noexcept
     }
 }
 }  // namespace
+void shuffle_values(void *random, unsigned char *values)
+{
+    auto **vtable = *reinterpret_cast<void ***>(random);
+    if (reinterpret_cast<std::uintptr_t>(vtable[3]) != base + kNextInt) {
+        fallback_shuffle(random, values, vtable[3]);
+        return;
+    }
+    int state = verification.load(std::memory_order_acquire);
+    if (state == 0) {
+        state = verify_xoroshiro(random) ? 1 : -1;
+        int expected = 0;
+        verification.compare_exchange_strong(
+            expected, state, std::memory_order_release, std::memory_order_acquire);
+        state = verification.load(std::memory_order_acquire);
+    }
+    if (state != 1) {
+        fallback_shuffle(random, values, vtable[3]);
+        return;
+    }
+    auto first = *reinterpret_cast<std::uint64_t *>(
+        static_cast<unsigned char *>(random) + 8);
+    auto second = *reinterpret_cast<std::uint64_t *>(
+        static_cast<unsigned char *>(random) + 0x10);
+    for (std::uint32_t index = 0; index < 256; ++index) {
+        const auto selected = index + next_xoroshiro(first, second, 256 - index);
+        std::swap(values[index], values[selected]);
+    }
+    *reinterpret_cast<std::uint64_t *>(
+        static_cast<unsigned char *>(random) + 8) = first;
+    *reinterpret_cast<std::uint64_t *>(
+        static_cast<unsigned char *>(random) + 0x10) = second;
+}
 
 void install()
 {

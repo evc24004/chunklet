@@ -65,21 +65,33 @@ run. All other record tags matched. The optimizer additionally validates its
 entire 256-step bounded-integer sequence against BDS on a cloned RNG state
 before using the fused path.
 
-## AVX2 octave evaluator
+## Equivalence-validated release result
 
-The v0.1.4 evaluator was measured with a controlled one-server-thread run to
-isolate CPU work from scheduler variance:
+The release artifact now enables only native evaluators that passed both
+same-input validation and a fresh-world semantic comparison. Isolated candidate
+evaluators matched BDS bit for bit across 328,559,926 Perlin calls, 90,564,332
+octave calls, and 2,831,004 proximity calls. They are nevertheless disabled:
+fresh worlds generated with them fell into a different semantic output family.
+Matching a function return value alone was therefore not accepted as render
+equivalence.
 
-| Metric | v0.1.4 | v0.1.3 |
-| --- | ---: | ---: |
-| Time | 63.72 seconds | 64.38 seconds |
-| Target throughput | 64.3 chunks/s | 63.6 chunks/s |
-| Generation phase | 62.41 seconds | 63.25 seconds |
-| Persisted target columns | 4,096 | 4,096 |
+Fresh BDS worlds are not themselves deterministic. Two unmodified
+one-server-thread controls with the same seed differed in 3,353 of 38,493
+canonicalized subchunks. The final optimized artifact differed from an
+unmodified control in 3,439 subchunks, 86 more than the control-to-control
+variance. All 38,493 subchunks were present and decoded successfully.
 
-This is a 1.1% throughput increase and a 1.3% generation-time reduction.
-Process-level counters from separate matched runs recorded 698.69 billion
-instructions for v0.1.4 versus 719.62 billion for v0.1.3, a 2.9% reduction.
-Sixteen-thread wall-clock runs varied too widely to establish a larger claim.
-The first 4,096 live octave evaluations matched the BDS implementation bit for
-bit, and direct database inspection found all 4,096 target columns serviceable.
+The corresponding 16-thread release run completed all 4,096 target chunks:
+
+| Metric | Result |
+| --- | ---: |
+| Time | 9.79 seconds |
+| Target throughput | 418.4 chunks/s |
+| Request phase | 0.10 seconds |
+| Generation phase | 9.13 seconds |
+| Persistence phase | 0.55 seconds |
+| Completed target chunks | 4,096 |
+
+The previously recorded 501.6 chunks/s run is not a release result. It included
+native candidates that passed short per-call validators but failed the
+fresh-world semantic comparison described above.
