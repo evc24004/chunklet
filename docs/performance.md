@@ -26,11 +26,11 @@ Benchmark run on 2026-08-15 against [Chunkize V1.0.4](https://github.com/ozorica
 | Metric | Chunkize | Chunklet |
 | --- | ---: | ---: |
 | Reported processed chunks | 4,096 | 4,096 |
-| Command completion time | 44 s | 9.33 s |
-| Reported throughput | ~93.1 chunks/s | 439.1 chunks/s |
+| Command completion time | 44 s | 7.87 s |
+| Reported throughput | ~93.1 chunks/s | 520.6 chunks/s |
 | Serviceable persisted columns | 4,046/4,096 | 4,096/4,096 |
-| Throughput multiple | 1.00x | 4.72x |
+| Throughput multiple | 1.00x | 5.59x |
 
-Chunklet completed in 78.8% less time and delivered 371.7% more throughput. Post-shutdown database inspection required each requested column to have finalized state `2`, at least 512 bytes of Data3D, and generated subchunk height coverage. Chunklet passed all 4,096 columns. Chunkize reported all chunks processed, but 50 columns were not finalized, so it did not achieve a valid full-completion time in this run.
+Chunklet completed in 82.1% less time and delivered 459.2% more throughput. Post-shutdown database inspection required each requested column to have finalized state `2`, at least 512 bytes of Data3D, and generated subchunk height coverage. Chunklet passed all 4,096 columns. Chunkize reported all chunks processed, but 50 columns were not finalized, so it did not achieve a valid full-completion time in this run.
 
 For completeness, [Chunkize main at `05c4790`](https://github.com/ozorical/Chunkize/commit/05c479053f2fcec2a38b3fa44d6a42d7fc1ad5ba) reported 39 seconds under the same setup, but only 713/4,096 requested columns were present after shutdown; that result is disqualified from the comparison.
