@@ -13,7 +13,7 @@ have a stable ABI. Use the plugin only with a supported binary.
 | ELF SHA-256 | `0a490c711d4a2ce075debcd979e8862b7eaba008373f9970f0edbb67f98f9207` |
 | Architecture | x86-64 with AVX2 |
 
-Chunklet stops during plugin enable if the GNU build ID is different. It then
+Chunklet stops during plugin load if the GNU build ID is different. It then
 checks the RTTI names, vtable address points, vtable targets, and instruction
 prefixes used by persistence. These checks run before Chunklet reads an
 Endstone native handle.
@@ -111,3 +111,5 @@ rejection of an unknown executable before private pointer reads.
 These checks qualify the candidate for an isolated runtime proof. The host
 integration owner must prove plugin load, live bit-exact validators, generation,
 commit, shutdown, and restart persistence against the same artifact hash.
+The current artifact and bounded hosting observations are recorded in
+[hosting evidence](hosting-1.26.52.3-evidence.md).
