@@ -42,7 +42,7 @@ PYTHONPATH=.artifacts/python python3 -m unittest discover -s tools -p '*_test.py
 locations, then checks every runtime RTTI, slot, patch-byte and initialization
 fingerprint guard, including currently dormant evaluator/compression hooks.
 
-`build.sh SDK_SOURCE ZLIB_SOURCE EXPECTED_LITE_SOURCE [JOBS]` builds only this
+`build.sh SDK_SOURCE ZLIB_SOURCE EXPECTED_LITE_SOURCE [JOBS] [BUILD_DIR]` builds only this
 plugin, with network access disabled and dependency mounts read-only. It uses
 the existing maintained Debian 12 / Clang 19 image
 `sha256:e35341094aed475b05143b1424e1ae3b449c845b001ca000c700e749a8f35576`
@@ -53,6 +53,8 @@ The SDK must be clean at `3491c609ddfde392cee2b062e3063e39aae87274`.
 executable bits against the inherited SDK pins before starting the container.
 The zlib static target explicitly enables PIC so standalone builds have the
 same loadable shared-library behavior as the enclosing build.
+Use a relative directory such as `.artifacts/build-clock` for an experimental
+candidate; it must resolve inside this checkout and preserves `build/` bytes.
 
 Without that local image, build with a compatible Debian 12 Clang/libc++
 toolchain and standard CMake inputs:
@@ -82,3 +84,31 @@ the hosting radius-256 tile stalled at 992/1,024 with that plan. This test prese
 all six neighbors for every target in negative, zero and positive coordinate
 tiles. Actual completion still requires native Loaded events and a successful
 database commit; the halo test alone does not certify runtime completion.
+
+Exact monotonic-clock scaling test and benchmark:
+
+```
+g++ -O3 -std=c++20 -Isrc tools/clock_scale_test.cpp -o .artifacts/clock_scale_test
+.artifacts/clock_scale_test
+clang++-19 -O3 -std=c++20 -Isrc tools/clock_scale_benchmark.cpp -o .artifacts/clock_scale_benchmark
+.artifacts/clock_scale_benchmark 3000000000 10000000
+.artifacts/clock_scale_benchmark 3000000000 10000000 tsc
+```
+
+The scaler precomputes `q = floor(2^64 * 1e9 / frequency)`. Its high-half
+multiply underestimates exact division by at most one; a second full-width
+product comparison adds that unit when required. Thus the final error is zero
+for every 64-bit tick count and supported 1–10 GHz frequency. Exactly 1 GHz uses
+identity conversion to avoid representing `2^64` in 64 bits. Products fit in
+128 bits and the correction cannot overflow. Tests cover frequency boundaries,
+tick-wrap boundaries, one million deterministic random conversions and adjacent
+tick monotonicity. The existing 4,096 live validations, error threshold and
+fallback remain intact.
+
+The benchmark reports five alternated rounds' medians and accepts an optional
+`tsc` argument to include RDTSCP. On the development host, Clang 19 at a 3 GHz
+conversion ratio measured 3.617→1.461 ns for scaling and 22.025→19.831 ns with
+RDTSCP. This is a microbenchmark, not a server wake-latency claim; profile the
+actual serving artifact before selecting it. For sampled instruction detail:
+`perf annotate --stdio -i PERF_DATA --symbol checked_clock --asm-raw` (the
+recorded plugin DSO/build ID must be available to perf).
