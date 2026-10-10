@@ -212,7 +212,7 @@ std::string ChunkletPlugin::format(const render::JobSnapshot &snapshot)
 
 }  // namespace chunklet
 
-ENDSTONE_PLUGIN("chunklet", "0.1.6", chunklet::ChunkletPlugin)
+ENDSTONE_PLUGIN("chunklet", "0.1.7", chunklet::ChunkletPlugin)
 {
     description = "Pre-generate Bedrock chunks with the native BDS chunk loader.";
     website = "https://github.com/evc24004/chunklet";

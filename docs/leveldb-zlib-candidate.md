@@ -126,9 +126,9 @@ Its build passes the GLIBC ceiling and actual ELF `DF_1_NODELETE` check; all 17
 Python tooling tests pass, including the residency rejection test. No native
 instruction guard was relaxed. Native fixture proof remains pending.
 
-The state-validation follow-up candidate is
+The version 0.1.7 state-validation follow-up candidate is
 `.artifacts/build-state-guard/endstone_chunklet.so`, SHA256
-`ecc312f1c05df9f2c90b833a5030cbf4e7b6ed876a9ee0e26f325c02349bbae6`.
+`695391a949716d494b3aae14986f0716c80f7579a0756fce235aa9d9496444a3`.
 It restores comparison of both Xoroshiro state words after noise construction
 and preserves compression validation slots across unsupported inputs or failed
 attempts. It also logs one synchronized shared-mutex registry entry count during
