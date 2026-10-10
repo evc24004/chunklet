@@ -25,7 +25,7 @@ elif ! git -C "$source_root" apply --reverse --check "$patch" 2>/dev/null; then
 fi
 make -C "$source_root" -j"$jobs" out-static/libleveldb.a
 mkdir -p "$(dirname "$output")"
-c++ -std=c++20 -DDLLX= -I"$source_root/include" \
+c++ -O2 -std=c++20 -DDLLX= -I"$source_root/include" \
     "$root/tools/database/inspect_columns.cpp" "$source_root/out-static/libleveldb.a" \
     -lsnappy -lz -pthread -o "$output"
 sha256sum "$output"

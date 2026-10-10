@@ -2,6 +2,7 @@
 #include <leveldb/decompress_allocator.h>
 #include <leveldb/snappy_compressor.h>
 #include <leveldb/zlib_compressor.h>
+#include "subchunk_validation.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -16,8 +17,11 @@ namespace {
 struct Column {
     bool finalized{};
     std::size_t data3d_size{};
-    int expected_top{-999};
-    int minimum_section{-4};
+    bool height_valid{};
+    bool payloads_valid{true};
+    std::uint32_t required_sections{};
+    std::uint32_t decoded_sections{};
+    std::string invalid_reason;
     std::vector<int> subchunks;
 };
 
@@ -71,9 +75,12 @@ int main(int argc, char **argv)
     const bool summary_only = argc == 8;
 
     leveldb::Options options;
-    options.compressors[0] = new leveldb::ZlibCompressorRaw(-1);
-    options.compressors[1] = new leveldb::ZlibCompressor();
-    options.compressors[2] = new leveldb::SnappyCompressor();
+    leveldb::ZlibCompressorRaw raw_compressor(-1);
+    leveldb::ZlibCompressor zlib_compressor;
+    leveldb::SnappyCompressor snappy_compressor;
+    options.compressors[0] = &raw_compressor;
+    options.compressors[1] = &zlib_compressor;
+    options.compressors[2] = &snappy_compressor;
     leveldb::DB *raw{};
     const auto open = leveldb::DB::Open(options, argv[1], &raw);
     if (!open.ok()) {
@@ -101,30 +108,39 @@ int main(int argc, char **argv)
         const std::size_t tag_offset = dimension == 0 ? 8 : 12;
         const auto tag = static_cast<unsigned char>(key[tag_offset]);
         auto &column = columns[{x, z}];
-        if (dimension != 0) {
-            column.minimum_section = 0;
-        }
+        const int minimum_section = dimension == 0 ? -4 : 0;
+        const unsigned height_limit = dimension == 0 ? 384 : dimension == 1 ? 128 : 256;
         const auto value = iterator->value();
         ++records;
         logical_bytes += key.size() + value.size();
         if (tag == 0x36) {
-            column.finalized = !value.empty() &&
-                static_cast<unsigned char>(value.data()[0]) == 2;
+            column.finalized = value.size() == 4 && read_i32(value.data()) == 2;
         } else if (tag == 0x2f && key.size() == tag_offset + 2) {
-            column.subchunks.push_back(
-                static_cast<std::int8_t>(key[tag_offset + 1]));
+            const int y = static_cast<std::int8_t>(key[tag_offset + 1]);
+            column.subchunks.push_back(y);
+            bool has_storage{};
+            std::string error;
+            const int section_index = y - minimum_section;
+            bool valid = section_index >= 0 && section_index < static_cast<int>(height_limit / 16);
+            if (!valid) error = "subchunk outside dimension height";
+            else valid = chunklet::database::decode_section(
+                {value.data(), value.size()}, y, has_storage, error);
+            if (valid && has_storage) column.decoded_sections |= 1U << section_index;
+            if (!valid) {
+                column.payloads_valid = false;
+                if (column.invalid_reason.empty()) column.invalid_reason = error;
+            }
         } else if (tag == 0x2b) {
             column.data3d_size = value.size();
-            unsigned maximum_height{};
+            column.height_valid = value.size() >= 512;
             for (std::size_t i = 0;
                  i + 1 < std::min<std::size_t>(512, value.size()); i += 2) {
                 const auto height = static_cast<unsigned char>(value.data()[i]) |
                     (static_cast<unsigned>(
                          static_cast<unsigned char>(value.data()[i + 1])) << 8);
-                maximum_height = std::max(maximum_height, height);
+                if (height > height_limit) column.height_valid = false;
+                else if (height != 0) column.required_sections |= 1U << ((height - 1) / 16);
             }
-            const int top_y = static_cast<int>(maximum_height) - 65;
-            column.expected_top = (top_y >= 0 ? top_y : top_y - 15) / 16;
         }
     }
     if (!iterator->status().ok()) {
@@ -138,10 +154,10 @@ int main(int argc, char **argv)
     for (const auto &[position, column] : columns) {
         auto subchunks = column.subchunks;
         std::sort(subchunks.begin(), subchunks.end());
-        const bool height_covered = column.expected_top < column.minimum_section ||
-            (!subchunks.empty() && subchunks.back() >= column.expected_top);
-        const bool serviceable = column.finalized && column.data3d_size >= 512 &&
-            height_covered;
+        const bool height_covered =
+            (column.decoded_sections & column.required_sections) == column.required_sections;
+        const bool serviceable = column.finalized && column.height_valid &&
+            column.payloads_valid && height_covered;
         complete = complete && serviceable;
         if (!summary_only) {
             std::cout << position.first << ',' << position.second
@@ -150,7 +166,11 @@ int main(int argc, char **argv)
             for (const auto y : subchunks) {
                 std::cout << y << ',';
             }
-            std::cout << " serviceable=" << serviceable << '\n';
+            std::cout << " payloads_valid=" << column.payloads_valid
+                      << " height_covered=" << height_covered
+                      << " serviceable=" << serviceable;
+            if (!column.invalid_reason.empty()) std::cout << " invalid=" << column.invalid_reason;
+            std::cout << '\n';
         }
     }
     std::cout << "complete_columns=" << columns.size() << '/' << expected

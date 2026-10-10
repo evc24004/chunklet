@@ -11,7 +11,7 @@ not claim a production rollout or completed 10,000-by-10,000-block benchmark.
 | BDS Linux version | 1.26.52.3 |
 | BDS GNU build ID | `c0ff36e2eacfc191f01e189237df71f139b5d04a` |
 | BDS SHA256 | `0a490c711d4a2ce075debcd979e8862b7eaba008373f9970f0edbb67f98f9207` |
-| Offline column inspector SHA256 | `057d4735e573bb9ef81b29cd35fb747b02d8f4cda606e335868a335b93c3c035` |
+| Offline column inspector SHA256 (superseded; see correction below) | `057d4735e573bb9ef81b29cd35fb747b02d8f4cda606e335868a335b93c3c035` |
 | Hosting image used for active-stop proof | `sha256:0d317c26aa80209f32e5500815a682519d539d79f5f194156bfa9e9e104264e4` |
 
 The selected plugin was built with the pinned Debian 12 runner into
@@ -21,6 +21,36 @@ full-halo candidate without reciprocal clock scaling; do not select it by path
 alone. Hosting's `tools/hosting/chunklet-pin.json` pins the selected source and
 bytes. Documentation-only commits after this code revision do not replace that
 artifact pin.
+
+## Inspector correction after native review
+
+The original inspector counted subchunk keys without decoding their values.
+An empty value could therefore satisfy its coverage check. Its coverage result
+must not be used as proof of decodable block storage.
+
+The replacement `.artifacts/inspect-columns-strict` has SHA256
+`9547c8ad876cffd43595a69bb92a672923eff4953cd9c9fadbfcf014ddd6e62a`.
+It uses LevelDB source `4846fc72c7eda860b1bcf6efc58920a9273da928` plus
+the maintained Snappy include patch, built with Ubuntu 24.04 GCC 13.3.0 and
+`-O2`. Its runtime requires GLIBC 2.38 and GLIBCXX 3.4.32. This change does not
+replace the plugin artifact or claim a new native-world receipt.
+
+Local evidence: 46 real LevelDB fixture cases pass, including three independent
+Prismarine NBT 2.8.0 fixtures. The old inspector falsely accepted 23 cases in
+the initial 43-case suite. The replacement rejects 13,920 truncated prefixes
+and completes 20,000 deterministic malformed-input mutations under
+AddressSanitizer and UndefinedBehaviorSanitizer. LeakSanitizer could not run
+under the execution sandbox's ptrace and was disabled for that instrumented
+test; no leak-check result is claimed.
+
+The stronger predicate validates all persistent v8/v9 block palettes, all
+packed indices and complete bounded NBT trees. Every height-map-indicated
+section must exist and decode. It fixes Nether/End height offsets, rejects
+out-of-dimension sections, and preserves the machine summary format.
+[Exact limits and reproduction commands](../tools/database/README.md) distinguish
+structural coverage from block-registry semantics, biome/entity validation and
+actual player-join proof. The integration owner must rerun stopped-database
+inspection with this exact new binary before crediting coverage.
 
 ## Local verification
 
