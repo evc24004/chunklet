@@ -103,7 +103,7 @@ secondary-table ambiguity. Global pointers come from matched RIP-relative
 instructions, not a blanket version offset. New data addresses shift by a
 different amount from nearby code.
 
-The offline audit verifies five RTTI names, nine vtable slots, 31 original
+The offline audit verifies five RTTI names, nine vtable slots, 35 original
 instruction guards, and the unchanged transient initialization fingerprint.
 The Endstone 0.11.13 SDK independently retains `ChunkState::Loaded = 11` and
 the dimension wrapper's native weak handle after its vptr. Native object field,
