@@ -33,6 +33,9 @@ End native_end;
 bool installed;
 std::atomic<bool> disabled{};
 std::atomic<std::size_t> calls{},validations{},mismatches{};
+// Successful validations plus currently reserved attempts, capped at 16.
+// Unsupported inputs and failed attempts must not exhaust the startup sample.
+std::atomic<std::size_t> sample_slots{};
 std::atomic<std::uint64_t> input_bytes{},native_bytes{},candidate_bytes{},native_ns{},candidate_ns{};
 constexpr std::size_t kTrampolineSize=29;
 
@@ -56,15 +59,25 @@ bool native_roundtrip(const std::string& encoded,const char *input,std::size_t l
 
 bool checked_compress(int level,const char* input,std::size_t length,std::string& output,bool raw)
 {
-    const auto index=calls.fetch_add(1,std::memory_order_relaxed);
+    calls.fetch_add(1,std::memory_order_relaxed);
     if(disabled.load(std::memory_order_acquire) || level < -1 || level > 9 || length>=std::numeric_limits<uInt>::max())
         return original(level,input,length,output,raw);
-    if(index>=16 && validations.load(std::memory_order_acquire)<16)
-        return original(level,input,length,output,raw);
+    bool sample=false;
+    if(validations.load(std::memory_order_acquire)<16){
+        auto slots=sample_slots.load(std::memory_order_relaxed);
+        while(slots<16 && !sample_slots.compare_exchange_weak(
+                  slots,slots+1,std::memory_order_acq_rel,std::memory_order_relaxed)){}
+        if(slots>=16)return original(level,input,length,output,raw);
+        sample=true;
+    }
+    struct Reservation {
+        bool release;
+        ~Reservation(){if(release)sample_slots.fetch_sub(1,std::memory_order_release);}
+    } reservation{sample};
     std::string candidate;
-    const auto start=index<16?std::chrono::steady_clock::now():std::chrono::steady_clock::time_point{};
+    const auto start=sample?std::chrono::steady_clock::now():std::chrono::steady_clock::time_point{};
     if(!compress_leveldb(level,input,length,candidate,raw))return original(level,input,length,output,raw);
-    if(index<16){
+    if(sample){
         const auto midpoint=std::chrono::steady_clock::now();
         std::string reference;
         const bool expected=original(level,input,length,reference,raw);
@@ -74,6 +87,7 @@ bool checked_compress(int level,const char* input,std::size_t length,std::string
             if(expected){output.append(reference);return true;}
             return false;
         }
+        reservation.release=false;
         validations.fetch_add(1,std::memory_order_release);
         input_bytes.fetch_add(length,std::memory_order_relaxed);
         native_bytes.fetch_add(reference.size(),std::memory_order_relaxed);

@@ -54,11 +54,13 @@ The native caller's compression level, raw flag, storage tag and size threshold
 remain unchanged. Encoded bytes may differ while decoded bytes must match.
 
 Before installing the hook, six raw/wrapped test streams at levels -1, 1, and 6
-must decode exactly through this BDS's original inflater. The first 16 actual
-compression calls additionally compress with both implementations and decode
-both outputs through BDS, comparing every input byte and stream completion.
-Concurrent calls beyond that sample use the original helper until all 16 samples
-have passed. Any mismatch permanently falls back to the original helper and
+must decode exactly through this BDS's original inflater. The first 16 eligible
+successful compression attempts additionally compress with both implementations
+and decode both outputs through BDS, comparing every input byte and stream completion.
+Concurrent calls beyond the 16 reserved sample slots use the original helper
+until all 16 samples have passed. Unsupported inputs do not reserve slots;
+failed attempts and exceptions return their reservation for a later call.
+Any mismatch permanently falls back to the original helper and
 returns the original output. Oversized or unsupported inputs also take the
 original path. No mismatch can silently advance the validation state.
 
@@ -123,3 +125,14 @@ The process-resident candidate supersedes that artifact:
 Its build passes the GLIBC ceiling and actual ELF `DF_1_NODELETE` check; all 17
 Python tooling tests pass, including the residency rejection test. No native
 instruction guard was relaxed. Native fixture proof remains pending.
+
+The state-validation follow-up candidate is
+`.artifacts/build-state-guard/endstone_chunklet.so`, SHA256
+`a52ec75814a99b5c7782869a50806dcf4de40d64d0b3d4f5c6c17b93aec87578`.
+It restores comparison of both Xoroshiro state words after noise construction
+and preserves compression validation slots across unsupported inputs or failed
+attempts. The exact-object ASan/UBSan test, 24-thread sampling test, 50 wire cases,
+35 instruction guards, and pinned build/residency checks pass. These tests are
+documented in [native validation regressions](../tools/native-validation-tests.md).
+The currently exercised hosting artifact is not replaced by this source receipt;
+the new candidate still needs its own live BDS validation and restart proof.

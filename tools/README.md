@@ -1,5 +1,8 @@
 # Native compatibility tooling
 
+[State and compression validation regressions](native-validation-tests.md)
+cover final RNG state, failed sampling attempts, and concurrent fallback gates.
+
 `native_abi.py` compares exact old/new Linux x86-64 BDS ELF inputs without
 executing either. It reports SHA-256 and GNU build IDs, unique instruction
 matches with only relative call/jump and RIP-relative displacement bytes

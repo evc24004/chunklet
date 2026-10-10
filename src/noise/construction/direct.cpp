@@ -59,7 +59,7 @@ void record_mismatch(int mode, std::size_t element, std::size_t offset,
 
 bool equivalent(const void *output, const unsigned char *candidate,
                 std::size_t count, const void *random,
-                const void *candidate_random, bool compare_random, int mode)
+                const void *candidate_random, bool legacy, int mode)
 {
     const auto *vector = static_cast<const std::uintptr_t *>(output);
     const auto bytes = vector[1] - vector[0];
@@ -67,10 +67,14 @@ bool equivalent(const void *output, const unsigned char *candidate,
         record_mismatch(mode, 0, kElementSize, count * kElementSize, bytes);
         return false;
     }
-    if (compare_random &&
-        std::memcmp(static_cast<const unsigned char *>(random) + 8,
+    // Both recognized RNGs have mutable state after their vptr. The legacy
+    // clone's trailing engine self-pointer differs intentionally; Xoroshiro
+    // has exactly two state words in its 24-byte object. Compare final state
+    // even when skipped octaves leave no output bytes to reveal divergence.
+    const auto random_state_size = legacy ? kLegacyRandomSize - 16 : std::size_t{16};
+    if (std::memcmp(static_cast<const unsigned char *>(random) + 8,
                     static_cast<const unsigned char *>(candidate_random) + 8,
-                    kLegacyRandomSize - 16) != 0) {
+                    random_state_size) != 0) {
         record_mismatch(mode, 0, kElementSize + 1, 0, 0);
         return false;
     }
