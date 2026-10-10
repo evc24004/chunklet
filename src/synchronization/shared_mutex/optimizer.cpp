@@ -235,4 +235,14 @@ void remove() noexcept
     registry.clear();
 }
 
+std::optional<std::size_t> registry_size() noexcept
+{
+    if (pthread_mutex_lock(&registry_mutex) != 0) {
+        return std::nullopt;
+    }
+    const auto entries = registry.size();
+    pthread_mutex_unlock(&registry_mutex);
+    return entries;
+}
+
 }  // namespace chunklet::synchronization::shared_mutex

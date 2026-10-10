@@ -127,6 +127,11 @@ void ChunkletPlugin::onDisable()
                     compression_stats.calls, compression_stats.validations, compression_stats.mismatches,
                     compression_stats.input_bytes, compression_stats.native_bytes, compression_stats.native_ns,
                     compression_stats.candidate_bytes, compression_stats.candidate_ns);
+    if (const auto entries = synchronization::shared_mutex::registry_size()) {
+        getLogger().info("Shared mutex registry: {} retained entries (process-owned; no eviction).", *entries);
+    } else {
+        getLogger().error("Shared mutex registry count unavailable: registry lock failed.");
+    }
     // Endstone stops its server thread before disabling plugins, but native
     // background workers can still hold custom mutexes or execute trampolines.
     // DF_1_NODELETE retains hook code and POD state after the plugin is deleted.

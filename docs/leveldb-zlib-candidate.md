@@ -128,10 +128,14 @@ instruction guard was relaxed. Native fixture proof remains pending.
 
 The state-validation follow-up candidate is
 `.artifacts/build-state-guard/endstone_chunklet.so`, SHA256
-`a52ec75814a99b5c7782869a50806dcf4de40d64d0b3d4f5c6c17b93aec87578`.
+`ecc312f1c05df9f2c90b833a5030cbf4e7b6ed876a9ee0e26f325c02349bbae6`.
 It restores comparison of both Xoroshiro state words after noise construction
 and preserves compression validation slots across unsupported inputs or failed
-attempts. The exact-object ASan/UBSan test, 24-thread sampling test, 50 wire cases,
+attempts. It also logs one synchronized shared-mutex registry entry count during
+disable, without adding instrumentation to normal lock operations. This snapshot
+does not establish a hard memory bound; workers can add entries afterward and
+entries remain process-owned. The 64-address/eight-thread diagnostic test passes.
+The exact-object ASan/UBSan test, 24-thread sampling test, 50 wire cases,
 35 instruction guards, and pinned build/residency checks pass. These tests are
 documented in [native validation regressions](../tools/native-validation-tests.md).
 The currently exercised hosting artifact is not replaced by this source receipt;
