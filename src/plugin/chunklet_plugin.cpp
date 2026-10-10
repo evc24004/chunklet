@@ -185,13 +185,14 @@ std::string ChunkletPlugin::format(const render::JobSnapshot &snapshot)
         "{}/{} chunks ({:.1f}%), {:.1f} chunks/s, {:.2f} s, "
         "{} active, {} queued, {} preloaded; phases: {:.2f} s request, "
         "{:.2f} s generation, {:.2f} s persistence; native states: {} unloaded, "
-        "{} generating, {} processing ({})",
+        "{} generating, {} processing ({}); pending targets: {} [{}]",
         snapshot.completed, snapshot.total, percent, snapshot.chunks_per_second,
         snapshot.elapsed_seconds, snapshot.active, snapshot.queued,
         snapshot.preloaded, snapshot.request_seconds, snapshot.generation_seconds,
         snapshot.persistence_seconds, snapshot.native_unloaded,
         snapshot.native_generating, snapshot.native_processing,
-        snapshot.native_state_counts);
+        snapshot.native_state_counts, snapshot.pending_targets,
+        snapshot.pending_target_sample);
 }
 
 }  // namespace chunklet

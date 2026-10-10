@@ -69,3 +69,16 @@ cmake --build build --target chunklet --parallel 2
 An actual serving runtime must pass `tools/native-cycle.json` (fresh generation,
 live optimizer validators, commit, shutdown, restart, persisted block marker).
 Large benchmark areas must use bounded sequential tiles; see the main README.
+
+Generation-frontier regression:
+
+```
+g++ -std=c++20 -Isrc tools/render_plan_test.cpp src/render/plan.cpp -o .artifacts/render_plan_test
+.artifacts/render_plan_test
+```
+
+The previous asymmetric plan omitted one dependency column on three sides;
+the hosting radius-256 tile stalled at 992/1,024 with that plan. This test preserves
+all six neighbors for every target in negative, zero and positive coordinate
+tiles. Actual completion still requires native Loaded events and a successful
+database commit; the halo test alone does not certify runtime completion.

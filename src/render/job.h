@@ -30,6 +30,8 @@ struct JobSnapshot {
     std::size_t native_generating{};
     std::size_t native_processing{};
     std::string native_state_counts;
+    std::size_t pending_targets{};
+    std::string pending_target_sample;
     double elapsed_seconds{};
     double chunks_per_second{};
     double request_seconds{};

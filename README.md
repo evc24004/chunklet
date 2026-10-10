@@ -45,6 +45,11 @@ until its final database commit; a single radius-5000 run would retain roughly
 392,000 columns. Radius-256 tiles retain 1,024 target columns each. A tile runner
 must wait for `Complete`, record the exact requested coordinate bounds, and
 resume only incomplete tiles. This preserves the existing persistence boundary.
+Each tile requests a full six-chunk dependency halo on all four sides. A
+radius-256 tile requests 1,936 columns including its halo and persists its
+1,024 targets. `chunklet status` includes a bounded sample of up to 16 pending
+target coordinates and native states, so an incomplete frontier can be
+distinguished from missing completion events.
 
 ## Persistence
 
