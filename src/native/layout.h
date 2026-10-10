@@ -7,31 +7,31 @@
 namespace chunklet::native {
 
 inline constexpr char kSupportedBuildId[] =
-    "2ae1fef8c3ce6a8ebdc43f96a30c4ab307c5ff82";
+    "c0ff36e2eacfc191f01e189237df71f139b5d04a";
 
-inline constexpr std::uintptr_t kOverworldVtable = 0x0e28e0b8;
-inline constexpr std::uintptr_t kBlockSourceVtable = 0x0e705a90;
-inline constexpr std::uintptr_t kMainChunkSourceVtable = 0x0e708be0;
-inline constexpr std::uintptr_t kNetworkChunkSourceVtable = 0x0e708d40;
-inline constexpr std::uintptr_t kWorldLimitChunkSourceVtable = 0x0e706f10;
-inline constexpr std::uintptr_t kDbChunkStorageVtable = 0x0e7736f0;
-inline constexpr std::uintptr_t kLevelStorageWriteBatchVtable = 0x0e773598;
+inline constexpr std::uintptr_t kOverworldVtable = 0xeea3358;
+inline constexpr std::uintptr_t kBlockSourceVtable = 0xf2ea710;
+inline constexpr std::uintptr_t kMainChunkSourceVtable = 0xf2efae0;
+inline constexpr std::uintptr_t kNetworkChunkSourceVtable = 0xf2ee238;
+inline constexpr std::uintptr_t kWorldLimitChunkSourceVtable = 0xf2ee408;
+inline constexpr std::uintptr_t kDbChunkStorageVtable = 0xf35b9c8;
+inline constexpr std::uintptr_t kLevelStorageWriteBatchVtable = 0xf359ea8;
 
-inline constexpr std::uintptr_t kOverworldTypeNameSlot = 0x0e28e8f0;
-inline constexpr std::uintptr_t kBlockSourceTypeNameSlot = 0x0e705db8;
-inline constexpr std::uintptr_t kMainChunkSourceTypeNameSlot = 0x0e708f60;
-inline constexpr std::uintptr_t kNetworkChunkSourceTypeNameSlot = 0x0e708fa0;
-inline constexpr std::uintptr_t kWorldLimitChunkSourceTypeNameSlot = 0x0e707818;
+inline constexpr std::uintptr_t kOverworldTypeNameSlot = 0xeea3770;
+inline constexpr std::uintptr_t kBlockSourceTypeNameSlot = 0xf2eb460;
+inline constexpr std::uintptr_t kMainChunkSourceTypeNameSlot = 0xf2efd18;
+inline constexpr std::uintptr_t kNetworkChunkSourceTypeNameSlot = 0xf2ee638;
+inline constexpr std::uintptr_t kWorldLimitChunkSourceTypeNameSlot = 0xf2ee6e0;
 
-inline constexpr std::uintptr_t kDimensionBlockSourceTarget = 0x0c118960;
-inline constexpr std::uintptr_t kBlockSourceChunkSourceTarget = 0x0c0df0e0;
-inline constexpr std::uintptr_t kMainGetOrLoadTarget = 0x0c191870;
-inline constexpr std::uintptr_t kNetworkGetOrLoadTarget = 0x0c1503e0;
-inline constexpr std::uintptr_t kFlushThreadBatchTarget = 0x0c193050;
-inline constexpr std::uintptr_t kSerializeChunkTarget = 0x0c8e5b10;
-inline constexpr std::uintptr_t kMarkChunkDirtyTarget = 0x0c1b8000;
-inline constexpr std::uintptr_t kSetChunkFinalizedTarget = 0x0c1984c0;
-inline constexpr std::uintptr_t kWriteBatchPutTarget = 0x0c8b7580;
+inline constexpr std::uintptr_t kDimensionBlockSourceTarget = 0xc965200;
+inline constexpr std::uintptr_t kBlockSourceChunkSourceTarget = 0xc8d1130;
+inline constexpr std::uintptr_t kMainGetOrLoadTarget = 0xca314e0;
+inline constexpr std::uintptr_t kNetworkGetOrLoadTarget = 0xc989e70;
+inline constexpr std::uintptr_t kFlushThreadBatchTarget = 0xca32d50;
+inline constexpr std::uintptr_t kSerializeChunkTarget = 0xd14bdc0;
+inline constexpr std::uintptr_t kMarkChunkDirtyTarget = 0xc9fc600;
+inline constexpr std::uintptr_t kSetChunkFinalizedTarget = 0xc9da380;
+inline constexpr std::uintptr_t kWriteBatchPutTarget = 0xd0d00a0;
 
 inline constexpr int kDimensionBlockSourceSlot = 13;
 inline constexpr int kBlockSourceChunkSourceSlot = 53;
@@ -39,7 +39,7 @@ inline constexpr int kGetOrLoadSlot = 9;
 inline constexpr int kFlushThreadBatchSlot = 29;
 inline constexpr int kWriteBatchPutSlot = 4;
 inline constexpr int kDeferredLoadMode = 1;
-inline constexpr int kLoadedState = 13;
+inline constexpr int kLoadedState = 11;
 inline constexpr std::size_t kChunkStateOffset = 0xb8;
 inline constexpr std::size_t kEndstoneDimensionHandleOffset = 8;
 inline constexpr std::size_t kWriteBatchTlsOffset = 0xb30;

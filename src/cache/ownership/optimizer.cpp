@@ -13,7 +13,7 @@
 
 namespace chunklet::cache::ownership {
 namespace {
-constexpr std::uintptr_t kResolve = 0xc0e1180;
+constexpr std::uintptr_t kResolve = 0xc8d34d0;
 constexpr std::array<unsigned char, 14> kOriginal{
     0x41, 0x57, 0x41, 0x56, 0x41, 0x54, 0x53,
     0x48, 0x83, 0xec, 0x18, 0x48, 0x89, 0xf2};
@@ -67,16 +67,16 @@ extern "C" __attribute__((naked, visibility("hidden"))) void
 chunklet_ownership_entry()
 {
     __asm__ volatile(
-        "mov 0x90(%rdi), %rax\n"
+        "mov 0xc8(%rdi), %rax\n"
         "cmp (%rsi), %rax\n"
         "jne 1f\n"
-        "mov 0xa0(%rdi), %rax\n"
+        "mov 0xd8(%rdi), %rax\n"
         "test %rax, %rax\n"
         "je 1f\n"
         "mov 0x8(%rax), %rax\n"
         "cmp $-1, %rax\n"
         "je 1f\n"
-        "mov 0xa8(%rdi), %rax\n"
+        "mov 0xe0(%rdi), %rax\n"
         "ret\n"
         "1: jmp *chunklet_ownership_fallback(%rip)\n");
 }

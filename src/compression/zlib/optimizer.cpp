@@ -16,10 +16,10 @@
 namespace chunklet::compression::zlib {
 namespace {
 constexpr std::size_t kPatchSize = 14;
-constexpr std::uintptr_t kDeflateInit = 0x427de40;
-constexpr std::uintptr_t kDeflateInit2 = 0x427de70;
-constexpr std::uintptr_t kDeflateEnd = 0x427e180;
-constexpr std::uintptr_t kDeflate = 0x427ef70;
+constexpr std::uintptr_t kDeflateInit = 0x45f92d0;
+constexpr std::uintptr_t kDeflateInit2 = 0x45f9300;
+constexpr std::uintptr_t kDeflateEnd = 0x45f9610;
+constexpr std::uintptr_t kDeflate = 0x45fa400;
 constexpr std::array<unsigned char, kPatchSize> kInitOriginal{
     0x50, 0x89, 0xc8, 0x49, 0x89, 0xd2, 0xba,
     0x08, 0x00, 0x00, 0x00, 0xb9, 0x0f, 0x00};

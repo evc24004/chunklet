@@ -131,11 +131,7 @@ void ChunkletPlugin::handleStart(endstone::CommandSender &sender,
     try {
         const auto bounds = render::square_bounds(parsed->center_x, parsed->center_z,
                                                    parsed->radius);
-        constexpr int generation_halo = 6;
-        auto generation_bounds = bounds.expanded(generation_halo);
-        ++generation_bounds.min_z;
-        --generation_bounds.max_x;
-        --generation_bounds.max_z;
+        const auto generation_bounds = render::generation_bounds(bounds);
         const bool bounded_generation =
             bounds.count() <= bounded_generation_target_limit;
         auto positions = bounded_generation

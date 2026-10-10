@@ -2,6 +2,7 @@
 
 #include "allocation/transient/object_pool.h"
 #include "cache/ownership/optimizer.h"
+#include "compression/zlib/leveldb_optimizer.h"
 #include "synchronization/shared_mutex/optimizer.h"
 #include "native/layout.h"
 #include "noise/area/optimizer.h"
@@ -12,11 +13,17 @@
 #include "spatial/containment/optimizer.h"
 
 #include <format>
+#include <atomic>
+#include <stdexcept>
 
 namespace chunklet {
 
 void ChunkletPlugin::onLoad()
 {
+    static std::atomic_flag loaded = ATOMIC_FLAG_INIT;
+    if (loaded.test_and_set()) {
+        throw std::runtime_error("Chunklet native hooks require a container restart; hot reload is unsupported");
+    }
     native::verify_layout();
     noise::area::install();
     try {
@@ -28,7 +35,9 @@ void ChunkletPlugin::onLoad()
         noise::construction::install_direct();
         spatial::containment::install();
         noise::shuffle::install();
+        compression::zlib::leveldb::install();
     } catch (...) {
+        compression::zlib::leveldb::remove();
         noise::shuffle::remove();
         spatial::containment::remove();
         noise::construction::remove_direct();
@@ -113,15 +122,21 @@ void ChunkletPlugin::onDisable()
             timing::monotonic::validation_count(),
             timing::monotonic::maximum_error_ns());
     }
-    noise::shuffle::remove();
-    spatial::containment::remove();
-    noise::construction::remove_direct();
-    noise::construction::remove();
-    allocation::transient::remove();
-    synchronization::shared_mutex::remove();
-    cache::ownership::remove();
-    timing::monotonic::remove();
-    noise::area::remove();
+    const auto compression_stats = compression::zlib::leveldb::stats();
+    getLogger().info("LevelDB zlib-ng: {} calls, {} native round-trip validations, {} mismatches; sampled input={} bytes, native={} bytes/{} ns, candidate={} bytes/{} ns.",
+                    compression_stats.calls, compression_stats.validations, compression_stats.mismatches,
+                    compression_stats.input_bytes, compression_stats.native_bytes, compression_stats.native_ns,
+                    compression_stats.candidate_bytes, compression_stats.candidate_ns);
+    if (const auto entries = synchronization::shared_mutex::registry_size()) {
+        getLogger().info("Shared mutex registry: {} retained entries (process-owned; no eviction).", *entries);
+    } else {
+        getLogger().error("Shared mutex registry count unavailable: registry lock failed.");
+    }
+    // Endstone stops its server thread before disabling plugins, but native
+    // background workers can still hold custom mutexes or execute trampolines.
+    // DF_1_NODELETE retains hook code and POD state after the plugin is deleted.
+    // Only the render job and Endstone callbacks have plugin-instance lifetime.
+    getLogger().info("Native optimization hooks remain resident until process exit; container restart is required to replace them.");
 }
 
 void ChunkletPlugin::onChunkLoad(const endstone::ChunkLoadEvent &event)
@@ -185,18 +200,19 @@ std::string ChunkletPlugin::format(const render::JobSnapshot &snapshot)
         "{}/{} chunks ({:.1f}%), {:.1f} chunks/s, {:.2f} s, "
         "{} active, {} queued, {} preloaded; phases: {:.2f} s request, "
         "{:.2f} s generation, {:.2f} s persistence; native states: {} unloaded, "
-        "{} generating, {} processing ({})",
+        "{} generating, {} processing ({}); pending targets: {} [{}]",
         snapshot.completed, snapshot.total, percent, snapshot.chunks_per_second,
         snapshot.elapsed_seconds, snapshot.active, snapshot.queued,
         snapshot.preloaded, snapshot.request_seconds, snapshot.generation_seconds,
         snapshot.persistence_seconds, snapshot.native_unloaded,
         snapshot.native_generating, snapshot.native_processing,
-        snapshot.native_state_counts);
+        snapshot.native_state_counts, snapshot.pending_targets,
+        snapshot.pending_target_sample);
 }
 
 }  // namespace chunklet
 
-ENDSTONE_PLUGIN("chunklet", "0.1.6", chunklet::ChunkletPlugin)
+ENDSTONE_PLUGIN("chunklet", "0.1.7", chunklet::ChunkletPlugin)
 {
     description = "Pre-generate Bedrock chunks with the native BDS chunk loader.";
     website = "https://github.com/evc24004/chunklet";

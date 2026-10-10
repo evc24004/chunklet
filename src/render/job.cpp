@@ -128,9 +128,11 @@ JobSnapshot RenderJob::snapshot() const
     const auto elapsed = std::chrono::duration<double>(end - started_).count();
     const auto rate = elapsed > 0.0 ? static_cast<double>(completed_) / elapsed : 0.0;
     std::size_t unloaded = 0;
-    std::array<std::size_t, 14> state_counts{};
+    std::array<std::size_t, native::kLoadedState + 1> state_counts{};
     std::size_t generating = 0;
     std::size_t processing = 0;
+    std::size_t pending_targets = 0;
+    std::string pending_target_sample;
     for (const auto &[key, lease] : active_) {
         static_cast<void>(key);
         const auto state = native::chunk_state(lease.chunk.get());
@@ -140,6 +142,16 @@ JobSnapshot RenderJob::snapshot() const
         unloaded += state == 0;
         generating += state == 1;
         processing += state >= 2 && state < native::kLoadedState;
+        if (lease.required) {
+            if (pending_targets < 16) {
+                if (!pending_target_sample.empty()) {
+                    pending_target_sample += ';';
+                }
+                pending_target_sample += std::format("{},{}:{}", lease.position.x,
+                                                      lease.position.z, state);
+            }
+            ++pending_targets;
+        }
     }
     std::string state_text;
     for (std::size_t state = 0; state < state_counts.size(); ++state) {
@@ -160,6 +172,8 @@ JobSnapshot RenderJob::snapshot() const
         .native_generating = generating,
         .native_processing = processing,
         .native_state_counts = std::move(state_text),
+        .pending_targets = pending_targets,
+        .pending_target_sample = std::move(pending_target_sample),
         .elapsed_seconds = elapsed,
         .chunks_per_second = rate,
         .request_seconds = request_seconds_,

@@ -1,4 +1,5 @@
 #include "timing/monotonic/optimizer.h"
+#include "timing/monotonic/scale.h"
 
 #include "native/layout.h"
 
@@ -18,7 +19,7 @@
 
 namespace chunklet::timing::monotonic {
 namespace {
-constexpr std::uintptr_t kClock = 0x3cfeb60;
+constexpr std::uintptr_t kClock = 0x407cc60;
 constexpr std::size_t kValidationCalls = 4'096;
 constexpr std::uint64_t kMaximumAllowedErrorNs = 100'000;
 constexpr std::array<unsigned char, 14> kOriginal{
@@ -32,7 +33,7 @@ Clock original;
 bool installed;
 std::uint64_t base_ticks;
 std::uint64_t base_ns;
-std::uint64_t ticks_per_second;
+ClockScale clock_scale{};
 std::atomic<int> validation_state{};
 std::atomic<std::size_t> validations{};
 std::atomic<std::size_t> mismatches{};
@@ -71,9 +72,7 @@ std::uint64_t kernel_tsc_frequency()
 std::uint64_t fast_clock() noexcept
 {
     const auto elapsed_ticks = read_ticks() - base_ticks;
-    const auto elapsed_ns = static_cast<std::uint64_t>(
-        (static_cast<unsigned __int128>(elapsed_ticks) * 1'000'000'000ULL) /
-        ticks_per_second);
+    const auto elapsed_ns = scale_ticks(elapsed_ticks, clock_scale);
     return base_ns + elapsed_ns;
 }
 
@@ -175,7 +174,7 @@ void install()
     if (std::memcmp(target, kOriginal.data(), kOriginal.size()) != 0) {
         throw std::runtime_error("BDS monotonic clock does not match the pinned build");
     }
-    ticks_per_second = kernel_tsc_frequency();
+    clock_scale = make_clock_scale(kernel_tsc_frequency());
     create_trampoline();
     const auto before = read_ticks();
     base_ns = original();

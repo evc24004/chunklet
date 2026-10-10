@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "phases": [
+    {
+      "name": "fresh",
+      "timeoutMs": 120000,
+      "commands": [
+        { "send": "chunklet start 32 overworld 4096 4096", "expect": "Complete\\. 16/16 chunks.*0 preloaded", "timeoutMs": 120000 },
+        { "send": "tickingarea add circle 4096 100 4096 1 chunklet-proof true", "expect": "[Tt]icking area" },
+        { "send": "chunklet start 32 overworld 4096 4096", "expect": "Complete\\. 16/16 chunks" },
+        { "send": "setblock 4096 100 4096 minecraft:gold_block", "expect": "[Bb]lock" },
+        { "send": "execute if block 4096 100 4096 minecraft:gold_block run say CHUNKLET_MARKER_READY", "expect": "CHUNKLET_MARKER_READY", "timeoutMs": 10000 },
+        { "send": "chunklet start 32 overworld 4096 4096", "expect": "Complete\\. 16/16 chunks" },
+        { "send": "chunklet status", "expect": "Chunklet idle\\. Last run: 16/16 chunks" }
+      ],
+      "checks": [
+        "evaluation ready: BDS build ID c0ff36e2eacfc191f01e189237df71f139b5d04a",
+        "Complete\\. 16/16 chunks.*0 preloaded"
+      ],
+      "shutdownChecks": [
+        "AVX2 area evaluator: [1-9][0-9]* bit-exact validations\\.",
+        "AVX2 containment evaluator: [0-9]+ bit-exact validations\\.",
+        "Direct noise construction: [1-9][0-9]* validations from [1-9][0-9]* calls",
+        "TSC monotonic clock: [1-9][0-9]* validations"
+      ]
+    },
+    {
+      "name": "restart",
+      "timeoutMs": 120000,
+      "commands": [
+        { "send": "tickingarea add circle 4096 100 4096 1 chunklet-proof true", "expect": "[Tt]icking area" },
+        { "send": "chunklet start 32 overworld 4096 4096", "expect": "Complete\\. 16/16 chunks", "timeoutMs": 120000 },
+        { "send": "execute if block 4096 100 4096 minecraft:gold_block run say CHUNKLET_PERSISTED_MARKER", "expect": "CHUNKLET_PERSISTED_MARKER", "timeoutMs": 10000 },
+        { "send": "chunklet status", "expect": "Chunklet idle\\. Last run: 16/16 chunks" }
+      ],
+      "checks": [
+        "evaluation ready: BDS build ID c0ff36e2eacfc191f01e189237df71f139b5d04a",
+        "Complete\\. 16/16 chunks",
+        "CHUNKLET_PERSISTED_MARKER"
+      ],
+      "shutdownChecks": [
+        "AVX2 area evaluator: [0-9]+ bit-exact validations\\.",
+        "AVX2 containment evaluator: [0-9]+ bit-exact validations\\.",
+        "Direct noise construction: [0-9]+ validations from [0-9]+ calls",
+        "TSC monotonic clock: [0-9]+ validations"
+      ]
+    }
+  ]
+}

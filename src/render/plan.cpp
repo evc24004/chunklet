@@ -93,6 +93,14 @@ ChunkBounds square_bounds(int center_x, int center_z, int radius)
             block_to_chunk(max_x), block_to_chunk(max_z)};
 }
 
+ChunkBounds generation_bounds(const ChunkBounds &target)
+{
+    // Lighting/postprocessing of boundary targets needs the full dependency
+    // frontier. Trimming a side can leave a complete target row processing
+    // indefinitely after every planned request has already been issued.
+    return target.expanded(6);
+}
+
 std::vector<ChunkPosition> row_major_order(const ChunkBounds &bounds)
 {
     if (bounds.min_x > bounds.max_x || bounds.min_z > bounds.max_z) {

@@ -1,45 +1,39 @@
 cmake_minimum_required(VERSION 3.20)
-project(chunklet VERSION 0.1.6 LANGUAGES CXX)
+project(chunklet VERSION 0.1.7 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
-set(CHUNKLET_ENDSTONE_SOURCE "" CACHE PATH "Path to an Endstone source tree")
-if(CHUNKLET_ENDSTONE_SOURCE)
+set(CHUNKLET_ENDSTONE_SOURCE "" CACHE PATH "Path to the pinned Endstone 0.11.13 source tree")
+if(NOT TARGET endstone)
+    if(NOT CHUNKLET_ENDSTONE_SOURCE OR
+       NOT EXISTS "${CHUNKLET_ENDSTONE_SOURCE}/include/CMakeLists.txt")
+        message(FATAL_ERROR "Standalone Chunklet builds require -DCHUNKLET_ENDSTONE_SOURCE=<Endstone 0.11.13 source>; see tools/README.md")
+    endif()
     add_subdirectory("${CHUNKLET_ENDSTONE_SOURCE}/include"
                      "${CMAKE_BINARY_DIR}/endstone-include")
-else()
-    FetchContent_Declare(
-        endstone_source
-        GIT_REPOSITORY https://github.com/EndstoneMC/endstone.git
-        GIT_TAG v0.11.7
-        SOURCE_SUBDIR include
-    )
-    FetchContent_MakeAvailable(endstone_source)
 endif()
 
-set(WITH_GTEST OFF CACHE BOOL "" FORCE)
-set(WITH_FUZZERS OFF CACHE BOOL "" FORCE)
-set(WITH_BENCHMARKS OFF CACHE BOOL "" FORCE)
-set(WITH_GZFILEOP OFF CACHE BOOL "" FORCE)
-set(WITH_NEW_STRATEGIES OFF CACHE BOOL "" FORCE)
-set(ZLIB_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
-set(ZLIBNG_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
-set(ZLIB_COMPAT ON CACHE BOOL "" FORCE)
-set(ZLIB_SYMBOL_PREFIX "chunklet_" CACHE STRING "" FORCE)
+# These normal variables are local to this subdirectory (and zlib-ng's child
+# directory). Do not FORCE cache options: that would change sibling plugins.
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+set(BUILD_TESTING OFF)
+set(WITH_GTEST OFF)
+set(WITH_FUZZERS OFF)
+set(WITH_BENCHMARKS OFF)
+set(WITH_NEW_STRATEGIES OFF)
+set(ZLIB_COMPAT ON)
+set(ZLIB_SYMBOL_PREFIX "chunklet_")
 FetchContent_Declare(
     zlib_ng
     GIT_REPOSITORY https://github.com/zlib-ng/zlib-ng.git
-    GIT_TAG 2.3.3
+    GIT_TAG 12731092979c6d07f42da27da673a9f6c7b13586
 )
 FetchContent_MakeAvailable(zlib_ng)
 
 set_property(TARGET zlib-ng-static PROPERTY POSITION_INDEPENDENT_CODE ON)
-get_target_property(CHUNKLET_ENDSTONE_INCLUDE_DIRS endstone INTERFACE_INCLUDE_DIRECTORIES)
-set_property(TARGET endstone PROPERTY
-    INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CHUNKLET_ENDSTONE_INCLUDE_DIRS}")
 
 set(CHUNKLET_DISTANCE_TABLE_OBJECT
     "${CMAKE_CURRENT_BINARY_DIR}/distance_table.o")
@@ -67,13 +61,14 @@ endstone_add_plugin(chunklet
     src/allocation/transient/object_copy.cpp
     src/compression/zlib/optimizer.cpp
     src/compression/zlib/stream_pool.cpp
+    src/compression/zlib/leveldb_kernel.cpp
+    src/compression/zlib/leveldb_optimizer.cpp
     src/native/chunk_source.cpp
     src/native/layout.cpp
     src/cache/ownership/optimizer.cpp
     src/synchronization/shared_mutex/optimizer.cpp
     src/spatial/containment/kernel.cpp
     src/spatial/containment/optimizer.cpp
-    src/spatial/proximity/optimizer.cpp
     src/timing/monotonic/optimizer.cpp
     src/noise/area/kernel.cpp
     src/noise/area/optimizer.cpp
@@ -100,7 +95,13 @@ endstone_add_plugin(chunklet
 )
 target_sources(chunklet PRIVATE "${CHUNKLET_DISTANCE_TABLE_OBJECT}")
 target_include_directories(chunklet PRIVATE src)
+set_target_properties(chunklet PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+get_target_property(CHUNKLET_ENDSTONE_INCLUDE_DIRS endstone INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(chunklet SYSTEM PRIVATE ${CHUNKLET_ENDSTONE_INCLUDE_DIRS})
 target_link_libraries(chunklet PRIVATE zlibstatic)
+# Native workers can outlive Endstone's plugin objects. Native hooks and their
+# state therefore have process lifetime; upgrades use a container restart.
+target_link_options(chunklet PRIVATE "-Wl,-z,nodelete")
 target_compile_options(chunklet PRIVATE
     -Wall -Wextra -Wpedantic -mtune=znver3 -fno-plt)
 set_property(TARGET chunklet PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)

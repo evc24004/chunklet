@@ -111,7 +111,7 @@ bool construct_positional_into(unsigned char *storage, void *random, int octave,
     auto **random_vtable = *reinterpret_cast<void ***>(random);
     using Fork = void (*)(void **, void *);
     void *factory{};
-    reinterpret_cast<Fork>(random_vtable[11])(&factory, random);
+    reinterpret_cast<Fork>(random_vtable[10])(&factory, random);
     if (factory == nullptr) {
         return false;
     }

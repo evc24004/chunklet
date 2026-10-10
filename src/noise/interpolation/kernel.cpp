@@ -2,7 +2,7 @@
 
 namespace chunklet::noise::interpolation {
 namespace {
-constexpr std::uintptr_t kNativeSample = 0xc9ca690;
+constexpr std::uintptr_t kNativeSample = 0xd2417d0;
 
 using NativeSample = float (*)(const void *, int, int, int, float, float, float);
 NativeSample native_sample;

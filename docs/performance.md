@@ -1,5 +1,9 @@
 # Performance
 
+These are preserved upstream measurements for BDS 1.26.40.8, not performance
+claims for this project's BDS 1.26.52.3 port. Beta generation/persistence
+correctness checks do not establish a transfer-latency improvement.
+
 | Metric | Stock BDS | Chunklet |
 | --- | ---: | ---: |
 | BDS version | 1.26.40.8 | 1.26.40.8 |

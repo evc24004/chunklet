@@ -15,7 +15,7 @@
 
 namespace chunklet::noise::construction {
 namespace {
-constexpr std::uintptr_t kConstructor = 0xc9c8b40;
+constexpr std::uintptr_t kConstructor = 0xd23fd60;
 constexpr std::size_t kTrampolineSize = 30;
 constexpr std::array<unsigned char, 17> kOriginal{
     0x55, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41, 0x54,

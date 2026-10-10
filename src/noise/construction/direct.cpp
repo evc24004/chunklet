@@ -18,8 +18,8 @@ using direct_kernel::construct_positional_into;
 using direct_kernel::kElementSize;
 using direct_kernel::kMaximumOctaves;
 
-constexpr std::uintptr_t kNextInt = 0x45419a0;
-constexpr std::size_t kLegacyRandomSize = 0x9f0;
+constexpr std::uintptr_t kNextInt = 0x48ca750;
+constexpr std::size_t kLegacyRandomSize = 0xa00;
 constexpr int kRequiredValidations = 8;
 
 std::uintptr_t executable_base;
@@ -59,7 +59,7 @@ void record_mismatch(int mode, std::size_t element, std::size_t offset,
 
 bool equivalent(const void *output, const unsigned char *candidate,
                 std::size_t count, const void *random,
-                const void *candidate_random, bool compare_random, int mode)
+                const void *candidate_random, bool legacy, int mode)
 {
     const auto *vector = static_cast<const std::uintptr_t *>(output);
     const auto bytes = vector[1] - vector[0];
@@ -67,10 +67,14 @@ bool equivalent(const void *output, const unsigned char *candidate,
         record_mismatch(mode, 0, kElementSize, count * kElementSize, bytes);
         return false;
     }
-    if (compare_random &&
-        std::memcmp(static_cast<const unsigned char *>(random) + 8,
+    // Both recognized RNGs have mutable state after their vptr. The legacy
+    // clone's trailing engine self-pointer differs intentionally; Xoroshiro
+    // has exactly two state words in its 24-byte object. Compare final state
+    // even when skipped octaves leave no output bytes to reveal divergence.
+    const auto random_state_size = legacy ? kLegacyRandomSize - 16 : std::size_t{16};
+    if (std::memcmp(static_cast<const unsigned char *>(random) + 8,
                     static_cast<const unsigned char *>(candidate_random) + 8,
-                    kLegacyRandomSize - 8) != 0) {
+                    random_state_size) != 0) {
         record_mismatch(mode, 0, kElementSize + 1, 0, 0);
         return false;
     }
@@ -94,9 +98,15 @@ bool equivalent(const void *output, const unsigned char *candidate,
     return true;
 }
 
-bool eligible(void *, int octave, std::size_t count, int mode)
+bool eligible(void *random, int octave, std::size_t count, int mode)
 {
-    return (mode == 0 || mode == 1) && octave <= 0 && octave >= -64 &&
+    auto **vtable = *reinterpret_cast<void ***>(random);
+    const bool xoroshiro = reinterpret_cast<std::uintptr_t>(vtable[3]) ==
+                           executable_base + kNextInt;
+    const bool legacy = legacy_random::matches(random);
+    return (mode == 0 || mode == 1) &&
+           (xoroshiro || (mode == 0 && legacy)) &&
+           octave <= 0 && octave >= -64 &&
            count != 0 && count <= kMaximumOctaves;
 }
 
@@ -169,7 +179,16 @@ extern "C" void direct_constructor(
         return;
     }
 
-    std::memcpy(validation_random.data(), random, validation_random.size());
+    // A legacy Random holds its MT engine inline but also caches its address.
+    // Copy the whole object and point the candidate back at its own engine;
+    // other RNG types have no established copyable ABI.
+    const bool legacy = legacy_random::matches(random);
+    std::memcpy(validation_random.data(), random,
+                legacy ? kLegacyRandomSize : std::size_t{24});
+    if (legacy) {
+        void *engine = validation_random.data() + 8;
+        std::memcpy(validation_random.data() + 0x9f8, &engine, sizeof(engine));
+    }
     bool positional_built = true;
     if (mode == 1) {
         positional_built = construct_positional_into(
@@ -186,9 +205,12 @@ extern "C" void direct_constructor(
                               octave, amplitudes, count),
                true)
             : positional_built;
+    if (!built) {
+        record_mismatch(mode, 0, kElementSize + 2, 1, 0);
+    }
     if (!built ||
         !equivalent(output, validation_output.data(), count, random,
-                    validation_random.data(), mode == 0, mode)) {
+                    validation_random.data(), legacy, mode)) {
         mismatches.fetch_add(1, std::memory_order_relaxed);
         candidate_state.store(-1, std::memory_order_release);
         return;
