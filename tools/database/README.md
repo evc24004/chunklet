@@ -17,13 +17,7 @@ nonstandard Snappy header path for the system package.
 ```console
 git clone https://github.com/Amulet-Team/leveldb-mcpe.git
 git -C leveldb-mcpe checkout 4846fc72c7eda860b1bcf6efc58920a9273da928
-git -C leveldb-mcpe apply "$PWD/tools/database/leveldb-system-snappy.patch"
-make -C leveldb-mcpe -j2 out-static/libleveldb.a
-c++ -std=c++20 -DDLLX= \
-  -Ileveldb-mcpe/include \
-  tools/database/inspect_columns.cpp \
-  leveldb-mcpe/out-static/libleveldb.a \
-  -lsnappy -lz -pthread -o inspect-columns
+bash tools/build-database-inspector.sh "$PWD/leveldb-mcpe" "$PWD/.artifacts/inspect-columns" 2
 ```
 
 ## Use
@@ -31,7 +25,7 @@ c++ -std=c++20 -DDLLX= \
 Coordinates are chunk coordinates, not block coordinates.
 
 ```console
-./inspect-columns <world-db> <dimension> \
+.artifacts/inspect-columns <world-db> <dimension> \
   <min-x> <min-z> <max-x> <max-z> [--summary]
 ```
 
@@ -43,7 +37,7 @@ every requested column is serviceable.
 Example for the 64 by 64 target region from the performance benchmark:
 
 ```console
-./inspect-columns worlds/chunklet-benchmark/db overworld \
+.artifacts/inspect-columns worlds/chunklet-benchmark/db overworld \
   437468 437468 437531 437531 --summary
 ```
 
@@ -51,3 +45,9 @@ Example for the 64 by 64 target region from the performance benchmark:
 It excludes LevelDB compression, indexes, logs, manifests, and filesystem
 allocation, so it is useful for comparing regions rather than predicting the
 exact world-directory size.
+
+The reusable builder refuses a wrong LevelDB commit or unrelated source edits,
+applies only the maintained system-Snappy include patch, and prints the output
+SHA-256. Build on a runtime-compatible system before copying the inspector to
+a host. The inspector's result is separate from an in-process `Complete` log;
+the authoritative generation proof includes both plus restart persistence.
