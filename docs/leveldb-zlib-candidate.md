@@ -66,7 +66,9 @@ original path. No mismatch can silently advance the validation state.
 
 Plugin disable logs bounded aggregate calls, successful validations, mismatches,
 and the first 16 samples' input bytes, output bytes and separate compression
-nanoseconds. These are diagnostic CPU observations, not a whole-tile throughput
+nanoseconds. These use `std::chrono::steady_clock`, not a thread CPU clock.
+Scheduling and fixed candidate-first ordering can affect the observations;
+they are elapsed-call measurements, not a whole-tile throughput
 claim. Six startup checks are separate from the logged live validation count.
 Native hooks now have process lifetime. The ELF requires `DF_1_NODELETE`, so
 Endstone's later dlclose cannot unmap code or state still reached by background
@@ -145,6 +147,17 @@ across 25,019 calls, zero mismatches, and an active-generation clean stop with
 native and Docker exit code zero. The 16 samples total 2,642,189 input bytes:
 native compression took 51,500,555 ns and produced 505,074 bytes; the candidate
 took 25,285,589 ns and produced 509,237 bytes. That is approximately 2.04 times
-the codec throughput with 0.824% more compressed bytes for these samples only.
-The 10,000-by-10,000 saved-map inspection and final one-CPU cold boots remain
-separate integration gates; no production rollout is established here.
+the elapsed-call ratio with 0.824% more compressed bytes for these samples only.
+The hosting integration subsequently verified all 391,876 persisted Overworld
+columns covering the 10,000-by-10,000 area, and completed eight one-CPU/one-worker
+process-cold boots. Five with unspecified filesystem caches took 2.200–2.407 s;
+three with the fixture DB/backing-file pages verified nonresident took
+2.250–2.294 s. Shared engine/device caches remain unspecified. The loopback
+fixture uses offline BDS mode, with an authenticated client separately proving
+saved-map spawn. Production retains online mode: its first measured native
+readiness was 2.312 s and complete public wake signaling 3.222 s. These results
+do not establish a universal three-second join bound. Hosting deployed this
+shared plugin in image `sha256:b35857d4fd5bb97a4024dad6423ca04378b73d8f2fad66a64154ae918c869f14`
+for subsequent starts; running customer worlds were not forcibly restarted.
+See the private hosting repository's `docs/hosting-wake-results.md` for the
+full measurement boundaries and receipt names.
