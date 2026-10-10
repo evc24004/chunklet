@@ -22,6 +22,18 @@ alone. Hosting's `tools/hosting/chunklet-pin.json` pins the selected source and
 bytes. Documentation-only commits after this code revision do not replace that
 artifact pin.
 
+The table above records the earlier clock-only candidate. The current hosting
+candidate is version **0.1.7**, source
+`1d201c3b1461282ae651f9bee8e56dc89a33496a`, artifact
+`.artifacts/build-state-guard/endstone_chunklet.so`, SHA256
+`695391a949716d494b3aae14986f0716c80f7579a0756fce235aa9d9496444a3`.
+Its hosting image is
+`sha256:b35857d4fd5bb97a4024dad6423ca04378b73d8f2fad66a64154ae918c869f14`.
+It adds the exact guarded LevelDB helper, process-resident hooks, restored RNG
+state comparison and bounded successful-validation reservations. Its audit
+passes 35 instruction guards, five RTTI guards, nine vtable slots and the
+initialization fingerprint, with the same GLIBC ceiling and ELF NODELETE check.
+
 ## Inspector correction after native review
 
 The original inspector counted subchunk keys without decoding their values.
@@ -81,8 +93,21 @@ the final runtime status was stopped. The operation credited no generation tile.
 An earlier stalled, asymmetric-halo run exited nonzero during shutdown without
 a recorded native exit cause. That failure was not reproduced by this controlled
 active-stop test. No speculative hook-lifetime or teardown change was made.
-This one scenario does not certify native plugin hot unload/reload or all
+That historical scenario did not certify native plugin hot unload/reload or all
 possible worker interleavings.
+
+The current 0.1.7 artifact has a separate active-generation stop receipt,
+`wake-final-active-stop.json`: generation 31, 170 previously completed tiles,
+0/1,089 active targets completed, 1,536 active native requests and 489 queued.
+Native and Docker exit codes are zero, OOM is false, and stdout EOF was drained.
+`wake-final-native-validation.json` records 16 noise-state validations across
+760 calls, 4,096 clock validations, and 16 successful compression validations
+across 25,019 calls with zero mismatches. Sampled compression consumed
+25,285,589 ns versus native 51,500,555 ns, with 509,237 versus 505,074 output
+bytes. This is a codec sample, not an end-to-end generation speedup.
+The shutdown registry snapshot contained zero entries for this workload.
+The current implementation retains native hooks until process exit and rejects
+same-module hot reload; it does not claim safe hot unloading.
 
 Hooks already install during `onLoad`, before world initialization. Moving the
 plugin's `onEnable` load order from PostWorld to Startup would not move those
@@ -100,7 +125,7 @@ the supported hosting preparation uses one or four generation workers.
 The shared-mutex optimizer keeps a 64-entry thread-local lookup cache and a
 process registry of one pthread lock per distinct native mutex address. Reserving
 4,096 map buckets is an initial allocation, not a hard cap. Entries remain until
-plugin removal. The long generation fixture should therefore retain memory
+process exit in the current candidate. The long generation fixture should retain memory
 measurements across tiles; short-run success alone does not establish a memory
 plateau. Ownership resolution reuses fields already cached by BDS and adds no
 per-chunk ownership map.

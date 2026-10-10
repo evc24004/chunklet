@@ -138,5 +138,13 @@ entries remain process-owned. The 64-address/eight-thread diagnostic test passes
 The exact-object ASan/UBSan test, 24-thread sampling test, 50 wire cases,
 35 instruction guards, and pinned build/residency checks pass. These tests are
 documented in [native validation regressions](../tools/native-validation-tests.md).
-The currently exercised hosting artifact is not replaced by this source receipt;
-the new candidate still needs its own live BDS validation and restart proof.
+The integration owner subsequently exercised these exact bytes in image
+`sha256:b35857d4fd5bb97a4024dad6423ca04378b73d8f2fad66a64154ae918c869f14`.
+`wake-final-native-validation.json` records 16 successful compression checks
+across 25,019 calls, zero mismatches, and an active-generation clean stop with
+native and Docker exit code zero. The 16 samples total 2,642,189 input bytes:
+native compression took 51,500,555 ns and produced 505,074 bytes; the candidate
+took 25,285,589 ns and produced 509,237 bytes. That is approximately 2.04 times
+the codec throughput with 0.824% more compressed bytes for these samples only.
+The 10,000-by-10,000 saved-map inspection and final one-CPU cold boots remain
+separate integration gates; no production rollout is established here.
