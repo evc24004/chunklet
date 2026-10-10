@@ -112,3 +112,27 @@ RDTSCP. This is a microbenchmark, not a server wake-latency claim; profile the
 actual serving artifact before selecting it. For sampled instruction detail:
 `perf annotate --stdio -i PERF_DATA --symbol checked_clock --asm-raw` (the
 recorded plugin DSO/build ID must be available to perf).
+
+Bounded hotspot inspection (never executes the server):
+
+```
+PYTHONPATH=.artifacts/python python3 tools/native_inspect.py BDS_ELF \
+  --address 0x40adb40 --size 376 --calls-to 0x40adb40 \
+  --output .artifacts/native/leveldb-compressor.json
+```
+
+`--size` is capped at 16 KiB; the output includes the exact ELF identity,
+range SHA256, instructions, and optional direct-call candidates. Byte scans can
+match embedded data, so confirm caller boundaries with disassembly before using
+results. `--type MANGLED_RTTI_NAME` optionally recovers RTTI relocation chains.
+The retained [LevelDB helper receipt](native/leveldb-compressor-1.26.52.3.json)
+contains the complete inspected helper and its only direct-call candidate.
+
+The LevelDB zlib-ng candidate is built into a separate directory using the
+ordinary pinned runner's `BUILD_DIR`, for example `.artifacts/build-zlib`.
+Run `bash tools/build-zlib-proof.sh .artifacts/build-zlib` to compile and execute
+50 raw/wrapped compatibility cases against independent Debian 12 system zlib,
+plus compression CPU time and output-size comparisons. This reusable runner
+uses the same offline build image and that build's pinned static zlib-ng.
+It does not execute BDS; startup and sampled runtime validation use BDS itself.
+See [the candidate review](../docs/leveldb-zlib-candidate.md) before selecting it.

@@ -1,0 +1,101 @@
+# LevelDB compression candidate
+
+This candidate addresses a measured generation hotspot without changing terrain
+noise, compressed-file formats, configured compression levels, or LevelDB's
+storage selection threshold. Its artifact is built separately from the verified
+clock candidate; hosting must complete native validation before changing its pin.
+
+## Reverse engineering evidence
+
+The exact BDS 1.26.52.3 profiler hotspot `0x45fd2e0` implements zlib's hash-chain
+longest-match search. Disassembly shows its 258-byte match limit, scalar byte
+comparison loop, previous-chain index loads, and the deflate state fields used by
+that algorithm. The other reported hotspot, `0xd2417d0`, is the already mapped
+Perlin sample routine. It is not changed here.
+
+The dormant global zlib optimizer was already uninstalled in the upstream
+optimization revision; its retained history does not explain why. It cannot be
+safely enabled on that fact alone. It replaces init/init2/deflate/end but leaves
+other public state-consuming functions untouched. An exact counterexample in
+this BDS is caller `0xed5128b`, which calls native `deflateBound` (`0x45fb3f0`)
+after initialization. Mixing zlib-ng's private stream state with that original
+function would be unsafe.
+
+Instead this candidate hooks the complete synchronous helper at `0x40adb40`:
+
+```cpp
+bool compress(int level, const char* input, size_t length,
+              std::string& output, bool raw);
+```
+
+Its 376-byte implementation owns a stack-local 112-byte z_stream, selects window
+bits -15 or +15, supplies DEFLATED/memory-level-8/default-strategy, appends output,
+and calls native deflateEnd before returning. The sole direct caller candidate
+at `0x40ad279` is confirmed by surrounding instructions as the SST block writer:
+it selects compression tag 4, passes raw=true and the configured level, then
+keeps compressed data only when it saves at least 12.5%. That caller is untouched.
+The retained [ELF receipt](../tools/native/leveldb-compressor-1.26.52.3.json)
+records exact bytes, identity and disassembly. No version-offset guesses are used.
+
+The hook overwrites 15 complete prologue bytes, preserving them in a trampoline.
+The existing BDS build-ID gate precedes installation. Four additional exact-byte
+guards cover this helper and native inflateInit2 (`0x46001d0`), inflate
+(`0x4600440`), and inflateEnd (`0x4602dc0`). The latter addresses are recovered
+from complete init/inflate/end sequences in BDS, and remain unmodified.
+
+## Compatibility and fallback
+
+Each candidate call owns its entire zlib-ng stream and appends output only after
+successful compression. The public z_stream layout is statically checked at 112
+bytes; the Endstone/BDS libc++ string ABI is checked at 24 bytes. No native
+compression stream ever passes through zlib-ng, and no zlib-ng state reaches
+native compression APIs. Stream cleanup occurs even if string allocation throws.
+The native caller's compression level, raw flag, storage tag and size threshold
+remain unchanged. Encoded bytes may differ while decoded bytes must match.
+
+Before installing the hook, six raw/wrapped test streams at levels -1, 1, and 6
+must decode exactly through this BDS's original inflater. The first 16 actual
+compression calls additionally compress with both implementations and decode
+both outputs through BDS, comparing every input byte and stream completion.
+Concurrent calls beyond that sample use the original helper until all 16 samples
+have passed. Any mismatch permanently falls back to the original helper and
+returns the original output. Oversized or unsupported inputs also take the
+original path. No mismatch can silently advance the validation state.
+
+Plugin disable logs bounded aggregate calls, successful validations, mismatches,
+and the first 16 samples' input bytes, output bytes and separate compression
+nanoseconds. These are diagnostic CPU observations, not a whole-tile throughput
+claim. Six startup checks are separate from the logged live validation count.
+The existing shutdown behavior is preserved, restoring this helper before the
+other hooks; native active-stop proof remains required for the new artifact.
+
+## Standalone measurements
+
+The reusable `tools/build-zlib-proof.sh` test performs 50 raw/wrapped cases at
+levels -1, 0, 1, 6 and 9 with empty, short, repeated, high-entropy and structured
+inputs, including inputs larger than its 128-KiB buffer. An independently loaded
+system libz inflates each result and must reproduce exact input bytes. It also
+checks append behavior and rejection without mutation for an invalid level.
+
+A development-host run, 200 compressions per provider at level 6, measured:
+
+| Input | Native-style system zlib bytes | zlib-ng bytes | System seconds | zlib-ng seconds | Ratio |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 131,073 repeated bytes | 145 | 145 | 0.0979 | 0.0491 | 1.99x |
+| 262,144 random bytes | 262,224 | 262,226 | 1.1142 | 0.9486 | 1.17x |
+| 262,144 structured bytes | 14,478 | 14,124 | 0.7385 | 0.6094 | 1.21x |
+
+These are synthetic compression measurements against system zlib, not BDS or
+saved-world throughput. Incompressible output can grow slightly; the unchanged
+native savings threshold still decides whether to store it compressed. Required
+host evidence is zero runtime validation mismatches, completed bounded generation,
+clean stop, offline persisted coverage, and successful native/player reload of
+the resulting save before selecting this artifact.
+
+The first reviewed candidate artifact is
+`.artifacts/build-zlib/endstone_chunklet.so`, SHA256
+`b6462fc26e534ce0876c6b21ac4dc3b1bfe39a1f298e99af3988dcac9513d356`.
+Offline audit passes 35 instruction guards (four added here), five RTTI guards,
+nine vtable slots, and the initialization fingerprint. All 16 Python tooling
+tests pass. Its GLIBC ceiling is 2.35. Native proof is pending at this handoff;
+the existing selected clock artifact remains unchanged.

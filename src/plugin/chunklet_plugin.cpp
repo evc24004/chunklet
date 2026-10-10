@@ -2,6 +2,7 @@
 
 #include "allocation/transient/object_pool.h"
 #include "cache/ownership/optimizer.h"
+#include "compression/zlib/leveldb_optimizer.h"
 #include "synchronization/shared_mutex/optimizer.h"
 #include "native/layout.h"
 #include "noise/area/optimizer.h"
@@ -28,7 +29,9 @@ void ChunkletPlugin::onLoad()
         noise::construction::install_direct();
         spatial::containment::install();
         noise::shuffle::install();
+        compression::zlib::leveldb::install();
     } catch (...) {
+        compression::zlib::leveldb::remove();
         noise::shuffle::remove();
         spatial::containment::remove();
         noise::construction::remove_direct();
@@ -113,6 +116,12 @@ void ChunkletPlugin::onDisable()
             timing::monotonic::validation_count(),
             timing::monotonic::maximum_error_ns());
     }
+    const auto compression_stats = compression::zlib::leveldb::stats();
+    getLogger().info("LevelDB zlib-ng: {} calls, {} native round-trip validations, {} mismatches; sampled input={} bytes, native={} bytes/{} ns, candidate={} bytes/{} ns.",
+                    compression_stats.calls, compression_stats.validations, compression_stats.mismatches,
+                    compression_stats.input_bytes, compression_stats.native_bytes, compression_stats.native_ns,
+                    compression_stats.candidate_bytes, compression_stats.candidate_ns);
+    compression::zlib::leveldb::remove();
     noise::shuffle::remove();
     spatial::containment::remove();
     noise::construction::remove_direct();

@@ -61,6 +61,8 @@ endstone_add_plugin(chunklet
     src/allocation/transient/object_copy.cpp
     src/compression/zlib/optimizer.cpp
     src/compression/zlib/stream_pool.cpp
+    src/compression/zlib/leveldb_kernel.cpp
+    src/compression/zlib/leveldb_optimizer.cpp
     src/native/chunk_source.cpp
     src/native/layout.cpp
     src/cache/ownership/optimizer.cpp

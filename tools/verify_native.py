@@ -17,6 +17,7 @@ ARRAYS = {
         'kFirstReleaseOriginal': 'kFirstRelease', 'kSecondReleaseOriginal': 'kSecondRelease', 'kRedundantCopyOriginal': 'kRedundantCopy'},
     'cache/ownership/optimizer.cpp': {'kOriginal': 'kResolve'},
     'compression/zlib/optimizer.cpp': {'kInitOriginal': 'kDeflateInit', 'kInit2Original': 'kDeflateInit2', 'kEndOriginal': 'kDeflateEnd', 'kDeflateOriginal': 'kDeflate'},
+    'compression/zlib/leveldb_optimizer.cpp': {'kOriginal':'kCompress','kInflateInitOriginal':'kInflateInit','kInflateOriginal':'kInflate','kInflateEndOriginal':'kInflateEnd'},
     'timing/monotonic/optimizer.cpp': {'kOriginal': 'kClock'},
     'noise/area/optimizer.cpp': {'kOriginal': 'kReadArea'},
     'noise/construction/direct_hook.cpp': {'kOriginal': 'kConstructor'},
