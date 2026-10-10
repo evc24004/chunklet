@@ -13,6 +13,9 @@ It does not use ticking areas.
 
 Chunklet checks the server binary when it starts.
 It stops if the binary is not supported.
+Native optimization hooks have process lifetime. Disabling the plugin cancels
+generation and unregisters its events, while the native hooks remain resident.
+Use a container restart to upgrade or remove Chunklet; hot reload is rejected.
 
 ## Build
 

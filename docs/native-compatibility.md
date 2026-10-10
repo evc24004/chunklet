@@ -29,7 +29,10 @@ Before patching, Chunklet verifies every original instruction byte at the three
 sites. On the first invocation it clones the RNG state and compares all 256
 bounded results plus the final state against the BDS virtual `nextInt`
 implementation. An unknown RNG implementation or failed comparison uses the
-original virtual calls. Plugin disable restores the original instruction bytes.
+original virtual calls. After successful installation, native hooks remain until
+process exit; plugin disable cancels gameplay work without restoring live code.
+Failed installation retains its rollback path. A container restart is required
+to upgrade or remove native optimizations; hot reload is unsupported.
 
 ## Native evaluator optimizations
 

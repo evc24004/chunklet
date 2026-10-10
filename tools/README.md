@@ -136,3 +136,8 @@ plus compression CPU time and output-size comparisons. This reusable runner
 uses the same offline build image and that build's pinned static zlib-ng.
 It does not execute BDS; startup and sampled runtime validation use BDS itself.
 See [the candidate review](../docs/leveldb-zlib-candidate.md) before selecting it.
+
+`verify_residency.py PLUGIN.so` requires ELF `DF_1_NODELETE` and runs automatically
+inside the pinned build. `residency_test.py` compiles actual resident and ordinary
+shared objects to prove that only the former is admitted. Successful native
+hooks are process-owned; Endstone disable only tears down plugin gameplay state.

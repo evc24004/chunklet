@@ -13,11 +13,17 @@
 #include "spatial/containment/optimizer.h"
 
 #include <format>
+#include <atomic>
+#include <stdexcept>
 
 namespace chunklet {
 
 void ChunkletPlugin::onLoad()
 {
+    static std::atomic_flag loaded = ATOMIC_FLAG_INIT;
+    if (loaded.test_and_set()) {
+        throw std::runtime_error("Chunklet native hooks require a container restart; hot reload is unsupported");
+    }
     native::verify_layout();
     noise::area::install();
     try {
@@ -121,16 +127,11 @@ void ChunkletPlugin::onDisable()
                     compression_stats.calls, compression_stats.validations, compression_stats.mismatches,
                     compression_stats.input_bytes, compression_stats.native_bytes, compression_stats.native_ns,
                     compression_stats.candidate_bytes, compression_stats.candidate_ns);
-    compression::zlib::leveldb::remove();
-    noise::shuffle::remove();
-    spatial::containment::remove();
-    noise::construction::remove_direct();
-    noise::construction::remove();
-    allocation::transient::remove();
-    synchronization::shared_mutex::remove();
-    cache::ownership::remove();
-    timing::monotonic::remove();
-    noise::area::remove();
+    // Endstone stops its server thread before disabling plugins, but native
+    // background workers can still hold custom mutexes or execute trampolines.
+    // DF_1_NODELETE retains hook code and POD state after the plugin is deleted.
+    // Only the render job and Endstone callbacks have plugin-instance lifetime.
+    getLogger().info("Native optimization hooks remain resident until process exit; container restart is required to replace them.");
 }
 
 void ChunkletPlugin::onChunkLoad(const endstone::ChunkLoadEvent &event)

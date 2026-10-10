@@ -99,6 +99,9 @@ set_target_properties(chunklet PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINA
 get_target_property(CHUNKLET_ENDSTONE_INCLUDE_DIRS endstone INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(chunklet SYSTEM PRIVATE ${CHUNKLET_ENDSTONE_INCLUDE_DIRS})
 target_link_libraries(chunklet PRIVATE zlibstatic)
+# Native workers can outlive Endstone's plugin objects. Native hooks and their
+# state therefore have process lifetime; upgrades use a container restart.
+target_link_options(chunklet PRIVATE "-Wl,-z,nodelete")
 target_compile_options(chunklet PRIVATE
     -Wall -Wextra -Wpedantic -mtune=znver3 -fno-plt)
 set_property(TARGET chunklet PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)

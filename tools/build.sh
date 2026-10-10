@@ -29,5 +29,6 @@ docker run --rm --network none --user 0 --platform linux/amd64 \
         maximum=$(objdump -T "$2/endstone_chunklet.so" | grep -o "GLIBC_[0-9.]*" | sort -Vu | tail -n1)
         case "$maximum" in GLIBC_2.3[0-5]|GLIBC_2.[0-2][0-9]|GLIBC_2.[0-9]) ;; *) echo "incompatible GLIBC: $maximum" >&2; exit 1;; esac
         if nm -D "$2/endstone_chunklet.so" | grep -Eq "__isoc23_|__isoc99_.*_chk"; then echo "unexpected C23 symbols" >&2; exit 1; fi
+        python3 tools/verify_residency.py "$2/endstone_chunklet.so"
         sha256sum "$2/endstone_chunklet.so"
     ' bash "$jobs" "$container_build"

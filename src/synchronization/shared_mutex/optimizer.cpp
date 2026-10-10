@@ -34,7 +34,9 @@ struct CacheEntry {
 
 
 pthread_mutex_t registry_mutex = PTHREAD_MUTEX_INITIALIZER;
-std::unordered_map<const void *, std::unique_ptr<Lock>> registry;
+// Intentionally process-owned: ELF finalizers must not destroy locks while
+// another native thread may still hold them. The kernel reclaims this storage.
+auto &registry = *new std::unordered_map<const void *, std::unique_ptr<Lock>>;
 thread_local std::array<CacheEntry, 64> cache;
 std::uintptr_t base;
 bool installed;

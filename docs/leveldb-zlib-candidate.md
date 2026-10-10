@@ -66,8 +66,25 @@ Plugin disable logs bounded aggregate calls, successful validations, mismatches,
 and the first 16 samples' input bytes, output bytes and separate compression
 nanoseconds. These are diagnostic CPU observations, not a whole-tile throughput
 claim. Six startup checks are separate from the logged live validation count.
-The existing shutdown behavior is preserved, restoring this helper before the
-other hooks; native active-stop proof remains required for the new artifact.
+Native hooks now have process lifetime. The ELF requires `DF_1_NODELETE`, so
+Endstone's later dlclose cannot unmap code or state still reached by background
+workers. Plugin disable cancels/releases the render job and Endstone unregisters
+events and tasks; it leaves native hooks and trampolines installed. A subsequent
+onLoad in the same module rejects hot reload. Container restart is the upgrade
+and removal mechanism. Failed initial installation retains its rollback path.
+
+This policy also covers the existing shared-mutex optimizer: restoring its
+original methods while native workers hold replacement locks would switch lock
+implementations mid-operation. Its registry is deliberately process-owned and
+has no ELF finalizer that destroys locks. The kernel reclaims it at process exit.
+Other installed optimizer state consists of retained code, pointers, atomics,
+or fixed arrays, and does not retain a ChunkletPlugin instance or callback.
+An in-flight counter alone cannot prove safe unload because a thread can be
+dispatched toward the hook before incrementing that counter. The pinned build
+runner therefore checks the ELF residency flag, with a test accepting an actual
+NODELETE shared object and rejecting an ordinary shared object. Native active-
+stop proof remains required for this new artifact and is not a claim that all
+possible thread interleavings were exercised.
 
 ## Standalone measurements
 
@@ -92,10 +109,17 @@ host evidence is zero runtime validation mismatches, completed bounded generatio
 clean stop, offline persisted coverage, and successful native/player reload of
 the resulting save before selecting this artifact.
 
-The first reviewed candidate artifact is
+The earlier, superseded nonresident candidate artifact was
 `.artifacts/build-zlib/endstone_chunklet.so`, SHA256
 `b6462fc26e534ce0876c6b21ac4dc3b1bfe39a1f298e99af3988dcac9513d356`.
 Offline audit passes 35 instruction guards (four added here), five RTTI guards,
 nine vtable slots, and the initialization fingerprint. All 16 Python tooling
 tests pass. Its GLIBC ceiling is 2.35. Native proof is pending at this handoff;
 the existing selected clock artifact remains unchanged.
+
+The process-resident candidate supersedes that artifact:
+`.artifacts/build-zlib/endstone_chunklet.so`, SHA256
+`a7d4900e07f978accf2d804da4abfec7dfe1785e0499736d24100fc48ad31483`.
+Its build passes the GLIBC ceiling and actual ELF `DF_1_NODELETE` check; all 17
+Python tooling tests pass, including the residency rejection test. No native
+instruction guard was relaxed. Native fixture proof remains pending.
