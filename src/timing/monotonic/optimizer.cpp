@@ -18,7 +18,7 @@
 
 namespace chunklet::timing::monotonic {
 namespace {
-constexpr std::uintptr_t kClock = 0x3cfeb60;
+constexpr std::uintptr_t kClock = 0x407cc60;
 constexpr std::size_t kValidationCalls = 4'096;
 constexpr std::uint64_t kMaximumAllowedErrorNs = 100'000;
 constexpr std::array<unsigned char, 14> kOriginal{

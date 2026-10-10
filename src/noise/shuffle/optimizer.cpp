@@ -16,7 +16,7 @@
 
 namespace chunklet::noise::shuffle {
 namespace {
-constexpr std::uintptr_t kNextInt = 0x45419a0;
+constexpr std::uintptr_t kNextInt = 0x48ca750;
 struct Region {
     std::uintptr_t offset;
     std::uint32_t stack_offset;
@@ -24,11 +24,11 @@ struct Region {
     std::string_view expected;
 };
 constexpr std::array kRegions{
-    Region{0xc9c8fec, 0x2e4, true,
-           "bb000100004531ff4c8b6424180f1f8000000000498b064c89f789deff50184401f84898420fb68c3ce40200000fb69404e40200004288943ce4020000888c04e402000049ffc748ffcb75c8"},
-    Region{0xc9c94f4, 0xbc, false,
-           "bb000100004531e40f1f4000498b074c89ff89deff50184401e04898420fb68c24bc0000000fb69404bc00000042889424bc000000888c04bc00000049ffc448ffcb75c8"},
-    Region{0xc9c9e0d, 0x1d4, false,
+    Region{0xd2401d0, 0x2e4, true,
+           "bb000100004531f6448b6424700f1f00498b45004c89ef89deff50184401f04898420fb68c34e40200000fb69404e402000042889434e4020000888c04e402000049ffc648ffcb75c7"},
+    Region{0xd2406c2, 0xbc, false,
+           "bb000100004531e4660f1f440000498b074c89ff89deff50184401e04898420fb68c24bc0000000fb69404bc00000042889424bc000000888c04bc00000049ffc448ffcb75c8"},
+    Region{0xd240f2d, 0x1d4, false,
            "bb000100004531e466662e0f1f840000000000498b074c89ff89deff50184401e04898420fb68c24d40100000fb69404d401000042889424d4010000888c04d401000049ffc448ffcb75c8"},
 };
 std::uintptr_t base;
@@ -137,9 +137,9 @@ void write_region(const Region &region, bool optimize)
     }
     std::memset(target, 0x90, size);
     std::size_t cursor = 0;
-    const unsigned char argument[] = {0x4c, 0x89,
-                                      static_cast<unsigned char>(region.legacy ? 0xf7 : 0xff),
-                                      0x48, 0x8d, 0xb4, 0x24};
+    const unsigned char argument[] = {
+        0x4c, 0x89, static_cast<unsigned char>(region.legacy ? 0xef : 0xff),
+        0x48, 0x8d, 0xb4, 0x24};
     std::memcpy(target + cursor, argument, sizeof(argument));
     cursor += sizeof(argument);
     std::memcpy(target + cursor, &region.stack_offset, sizeof(region.stack_offset));
@@ -149,10 +149,18 @@ void write_region(const Region &region, bool optimize)
     const auto helper = reinterpret_cast<std::uintptr_t>(&shuffle_values);
     std::memcpy(target + cursor, &helper, sizeof(helper));
     cursor += sizeof(helper);
-    const unsigned char suffix[] = {0xff, 0xd0, 0x31, 0xdb, 0x41,
-                                    static_cast<unsigned char>(region.legacy ? 0xbf : 0xbc),
-                                    0x00, 0x01, 0x00, 0x00};
+    const unsigned char suffix[] = {
+        0xff, 0xd0, 0x31, 0xdb, 0x41,
+        static_cast<unsigned char>(region.legacy ? 0xbe : 0xbc),
+        0x00, 0x01, 0x00, 0x00};
     std::memcpy(target + cursor, suffix, sizeof(suffix));
+    cursor += sizeof(suffix);
+    if (region.legacy) {
+        // This loop's replaced prologue also loaded the octave from [rsp+0x70].
+        // Keep it for ldexp and the element metadata after the shuffle.
+        constexpr unsigned char restore_octave[] = {0x44, 0x8b, 0x64, 0x24, 0x70};
+        std::memcpy(target + cursor, restore_octave, sizeof(restore_octave));
+    }
 }
 
 bool make_writable()

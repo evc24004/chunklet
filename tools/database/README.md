@@ -9,12 +9,16 @@ Stop the server before opening its world database.
 
 ## Build
 
-The inspector uses the Bedrock-compatible LevelDB fork:
+The inspector requires a C++20 compiler, GNU Make, and the system Snappy and
+zlib development packages. It uses the pinned Bedrock-compatible LevelDB fork
+below. Run from the Chunklet directory; the patch fixes that revision's
+nonstandard Snappy header path for the system package.
 
 ```console
 git clone https://github.com/Amulet-Team/leveldb-mcpe.git
 git -C leveldb-mcpe checkout 4846fc72c7eda860b1bcf6efc58920a9273da928
-make -C leveldb-mcpe -j
+git -C leveldb-mcpe apply "$PWD/tools/database/leveldb-system-snappy.patch"
+make -C leveldb-mcpe -j2 out-static/libleveldb.a
 c++ -std=c++20 -DDLLX= \
   -Ileveldb-mcpe/include \
   tools/database/inspect_columns.cpp \

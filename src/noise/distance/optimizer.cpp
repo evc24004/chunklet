@@ -21,12 +21,12 @@ extern const unsigned char _binary_distance_table_bin_end[]
 namespace chunklet::noise::distance {
 namespace {
 constexpr std::size_t kTableSize = 0xd800;
-constexpr std::uintptr_t kInitializer = 0xc9689e0;
-constexpr std::uintptr_t kAllocator = 0xe850c08;
-constexpr std::uintptr_t kTablePointer = 0xea168a0;
+constexpr std::uintptr_t kInitializer = 0xd1ef960;
+constexpr std::uintptr_t kAllocator = 0xf4463b0;
+constexpr std::uintptr_t kTablePointer = 0xf61ecf8;
 constexpr std::array<unsigned char, 14> kOriginal{
     0x41, 0x56, 0x53, 0x48, 0x83, 0xec, 0x68,
-    0x48, 0x8b, 0x05, 0x1a, 0x82, 0xee, 0x01};
+    0x48, 0x8b, 0x05, 0x42, 0x6a, 0x25, 0x02};
 
 using Allocate = void *(*)(void *, std::size_t);
 std::uintptr_t base;

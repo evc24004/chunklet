@@ -128,7 +128,7 @@ JobSnapshot RenderJob::snapshot() const
     const auto elapsed = std::chrono::duration<double>(end - started_).count();
     const auto rate = elapsed > 0.0 ? static_cast<double>(completed_) / elapsed : 0.0;
     std::size_t unloaded = 0;
-    std::array<std::size_t, 14> state_counts{};
+    std::array<std::size_t, native::kLoadedState + 1> state_counts{};
     std::size_t generating = 0;
     std::size_t processing = 0;
     for (const auto &[key, lease] : active_) {

@@ -1,0 +1,910 @@
+{
+  "old": {
+    "path": "/root/.cache/mwbot-harness/bds-0.11.12-remote-v2/bedrock_server",
+    "buildId": "ea299d3d03fca9827d3e71cf4e503ede30ba9805",
+    "sha256": "e93e739f373a84edfff7c9cd76fcb090c2176744b412e1143f1b38e91a49bed4"
+  },
+  "new": {
+    "path": ".artifacts/native/bedrock_server-1.26.52.3",
+    "buildId": "c0ff36e2eacfc191f01e189237df71f139b5d04a",
+    "sha256": "0a490c711d4a2ce075debcd979e8862b7eaba008373f9970f0edbb67f98f9207"
+  },
+  "mappings": {
+    "0x51887df": {
+      "references": [
+        {
+          "path": "src/allocation/transient/object_pool.cpp",
+          "line": "constexpr std::uintptr_t kFirstAllocation = 0x51887df;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x518885f"
+      ]
+    },
+    "0x5188976": {
+      "references": [
+        {
+          "path": "src/allocation/transient/object_pool.cpp",
+          "line": "constexpr std::uintptr_t kSecondAllocation = 0x5188976;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x51889f6"
+      ]
+    },
+    "0x51889c1": {
+      "references": [
+        {
+          "path": "src/allocation/transient/object_pool.cpp",
+          "line": "constexpr std::uintptr_t kFirstRelease = 0x51889c1;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x5188a41"
+      ]
+    },
+    "0x51889f1": {
+      "references": [
+        {
+          "path": "src/allocation/transient/object_pool.cpp",
+          "line": "constexpr std::uintptr_t kSecondRelease = 0x51889f1;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x5188a71"
+      ]
+    },
+    "0x51889ac": {
+      "references": [
+        {
+          "path": "src/allocation/transient/object_pool.cpp",
+          "line": "constexpr std::uintptr_t kRedundantCopy = 0x51889ac;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x5188a2c"
+      ]
+    },
+    "0x5188801": {
+      "references": [
+        {
+          "path": "src/allocation/transient/object_pool.cpp",
+          "line": "constexpr std::uintptr_t kInitializationStart = 0x5188801;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x5188881"
+      ]
+    },
+    "0x518895d": {
+      "references": [
+        {
+          "path": "src/allocation/transient/object_pool.cpp",
+          "line": "constexpr std::uintptr_t kInitializationEnd = 0x518895d;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x51889dd"
+      ]
+    },
+    "0xf456340": {
+      "references": [
+        {
+          "path": "src/allocation/transient/object_pool.cpp",
+          "line": "constexpr std::uintptr_t kTemplatePair = 0xf456340;"
+        }
+      ],
+      "method": "matched-code-rip-reference",
+      "candidates": [
+        "0xf456740"
+      ],
+      "evidence": [
+        {
+          "target": "0xf456740",
+          "instruction": "0x51887af"
+        },
+        {
+          "target": "0xf456740",
+          "instruction": "0x51887c4"
+        }
+      ]
+    },
+    "0xf4564f8": {
+      "references": [
+        {
+          "path": "src/allocation/transient/object_pool.cpp",
+          "line": "constexpr std::uintptr_t kTemplateRemainder = 0xf4564f8;"
+        }
+      ],
+      "method": "matched-code-rip-reference",
+      "candidates": [
+        "0xf4568f8"
+      ],
+      "evidence": [
+        {
+          "target": "0xf4568f8",
+          "instruction": "0x51887bd"
+        }
+      ]
+    },
+    "0xc8d30b0": {
+      "references": [
+        {
+          "path": "src/cache/ownership/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kResolve = 0xc8d30b0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xc8d34d0"
+      ]
+    },
+    "0x45f9250": {
+      "references": [
+        {
+          "path": "src/compression/zlib/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kDeflateInit = 0x45f9250;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x45f92d0"
+      ]
+    },
+    "0x45f9280": {
+      "references": [
+        {
+          "path": "src/compression/zlib/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kDeflateInit2 = 0x45f9280;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x45f9300"
+      ]
+    },
+    "0x45f9590": {
+      "references": [
+        {
+          "path": "src/compression/zlib/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kDeflateEnd = 0x45f9590;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x45f9610"
+      ]
+    },
+    "0x45fa380": {
+      "references": [
+        {
+          "path": "src/compression/zlib/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kDeflate = 0x45fa380;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x45fa400"
+      ]
+    },
+    "0xeea2f38": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kOverworldVtable = 0x0eea2f38;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "18OverworldDimension",
+      "candidates": [
+        "0xeea3358"
+      ]
+    },
+    "0xf2ea2f0": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kBlockSourceVtable = 0x0f2ea2f0;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "11BlockSource",
+      "candidates": [
+        "0xf2ea710"
+      ]
+    },
+    "0xf2ef6c0": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kMainChunkSourceVtable = 0x0f2ef6c0;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "15MainChunkSource",
+      "candidates": [
+        "0xf2efae0"
+      ]
+    },
+    "0xf2ede18": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kNetworkChunkSourceVtable = 0x0f2ede18;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "18NetworkChunkSource",
+      "candidates": [
+        "0xf2ee238"
+      ]
+    },
+    "0xf2edfe8": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kWorldLimitChunkSourceVtable = 0x0f2edfe8;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "21WorldLimitChunkSource",
+      "candidates": [
+        "0xf2ee408"
+      ]
+    },
+    "0xf35b5a8": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kDbChunkStorageVtable = 0x0f35b5a8;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "14DBChunkStorage",
+      "candidates": [
+        "0xf35b9c8"
+      ]
+    },
+    "0xf359a88": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kLevelStorageWriteBatchVtable = 0x0f359a88;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "22LevelStorageWriteBatch",
+      "candidates": [
+        "0xf359ea8"
+      ]
+    },
+    "0xeea3350": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kOverworldTypeNameSlot = 0x0eea3350;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "18OverworldDimension",
+      "candidates": [
+        "0xeea3770"
+      ]
+    },
+    "0xf2eb040": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kBlockSourceTypeNameSlot = 0x0f2eb040;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "11BlockSource",
+      "candidates": [
+        "0xf2eb460"
+      ]
+    },
+    "0xf2ef8f8": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kMainChunkSourceTypeNameSlot = 0x0f2ef8f8;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "15MainChunkSource",
+      "candidates": [
+        "0xf2efd18"
+      ]
+    },
+    "0xf2ee218": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kNetworkChunkSourceTypeNameSlot = 0x0f2ee218;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "18NetworkChunkSource",
+      "candidates": [
+        "0xf2ee638"
+      ]
+    },
+    "0xf2ee2c0": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kWorldLimitChunkSourceTypeNameSlot = 0x0f2ee2c0;"
+        }
+      ],
+      "method": "rtti-name",
+      "name": "21WorldLimitChunkSource",
+      "candidates": [
+        "0xf2ee6e0"
+      ]
+    },
+    "0xc964de0": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kDimensionBlockSourceTarget = 0x0c964de0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xc965200"
+      ]
+    },
+    "0xc8d0d10": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kBlockSourceChunkSourceTarget = 0x0c8d0d10;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xc8d1130"
+      ]
+    },
+    "0xca310c0": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kMainGetOrLoadTarget = 0x0ca310c0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xca314e0"
+      ]
+    },
+    "0xc989a50": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kNetworkGetOrLoadTarget = 0x0c989a50;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xc989e70"
+      ]
+    },
+    "0xca32930": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kFlushThreadBatchTarget = 0x0ca32930;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xca32d50"
+      ]
+    },
+    "0xd14b9a0": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kSerializeChunkTarget = 0x0d14b9a0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd14bdc0"
+      ]
+    },
+    "0xc9fc1e0": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kMarkChunkDirtyTarget = 0x0c9fc1e0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xc9fc600"
+      ]
+    },
+    "0xc9d9f60": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kSetChunkFinalizedTarget = 0x0c9d9f60;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xc9da380"
+      ]
+    },
+    "0xd0cfc80": {
+      "references": [
+        {
+          "path": "src/native/layout.h",
+          "line": "inline constexpr std::uintptr_t kWriteBatchPutTarget = 0x0d0cfc80;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd0d00a0"
+      ]
+    },
+    "0xd23eaf0": {
+      "references": [
+        {
+          "path": "src/noise/area/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kReadArea = 0xd23eaf0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd23ef10"
+      ]
+    },
+    "0x48ca6d0": {
+      "references": [
+        {
+          "path": "src/noise/construction/direct.cpp",
+          "line": "constexpr std::uintptr_t kNextInt = 0x48ca6d0;"
+        },
+        {
+          "path": "src/noise/shuffle/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kNextInt = 0x48ca6d0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x48ca750"
+      ]
+    },
+    "0xd23f940": {
+      "references": [
+        {
+          "path": "src/noise/construction/direct_hook.cpp",
+          "line": "constexpr std::uintptr_t kConstructor = 0xd23f940;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd23fd60"
+      ]
+    },
+    "0x8a5a5d0": {
+      "references": [
+        {
+          "path": "src/noise/construction/legacy_random.cpp",
+          "line": "constexpr std::uintptr_t kNextInt = 0x8a5a5d0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x8a5a9c0"
+      ]
+    },
+    "0xed49c10": {
+      "references": [
+        {
+          "path": "src/noise/construction/legacy_random.cpp",
+          "line": "constexpr std::uintptr_t kGenerate = 0xed49c10;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xed4a030"
+      ]
+    },
+    "0xd23f956": {
+      "references": [
+        {
+          "path": "src/noise/construction/reserve.cpp",
+          "line": "constexpr std::uintptr_t kConstructorInit = 0xd23f956;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd23fd76"
+      ]
+    },
+    "0xf445f90": {
+      "references": [
+        {
+          "path": "src/noise/construction/reserve.cpp",
+          "line": "constexpr std::uintptr_t kAllocator = 0xf445f90;"
+        },
+        {
+          "path": "src/noise/distance/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kAllocator = 0xf445f90;"
+        }
+      ],
+      "method": "matched-code-rip-reference",
+      "candidates": [
+        "0xf4463b0"
+      ],
+      "evidence": [
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x51887df"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x51887e6"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x5188976"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x518897d"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x5188976"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x518897d"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0xd0cfc97"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0xd0cfc9e"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0xd1ef547"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0xd1ef54e"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0xd24030f"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0xd240316"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x51887df"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x51887e6"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x5188976"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x518897d"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x5188b3d"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x5188b44"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x5188df7"
+        },
+        {
+          "target": "0xf4463b0",
+          "instruction": "0x5188dfe"
+        }
+      ]
+    },
+    "0xd1ef540": {
+      "references": [
+        {
+          "path": "src/noise/distance/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kInitializer = 0xd1ef540;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd1ef960"
+      ]
+    },
+    "0xf61e8f8": {
+      "references": [
+        {
+          "path": "src/noise/distance/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kTablePointer = 0xf61e8f8;"
+        },
+        {
+          "path": "src/spatial/containment/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kLocalTable = 0xf61e8f8;"
+        }
+      ],
+      "method": "matched-code-rip-reference",
+      "candidates": [
+        "0xf61ecf8"
+      ],
+      "evidence": [
+        {
+          "target": "0xf61ecf8",
+          "instruction": "0xd1ef57b"
+        },
+        {
+          "target": "0xf61ecf8",
+          "instruction": "0xd1f02de"
+        }
+      ]
+    },
+    "0xd2413b0": {
+      "references": [
+        {
+          "path": "src/noise/interpolation/kernel.cpp",
+          "line": "constexpr std::uintptr_t kNativeSample = 0xd2413b0;"
+        },
+        {
+          "path": "src/noise/perlin/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kSample = 0xd2413b0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd2417d0"
+      ]
+    },
+    "0xd2410c0": {
+      "references": [
+        {
+          "path": "src/noise/interpolation/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kMultiOctaveSample = 0xd2410c0;"
+        },
+        {
+          "path": "src/noise/perlin/octave_optimizer.cpp",
+          "line": "constexpr std::uintptr_t kEvaluate = 0xd2410c0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd2414e0"
+      ]
+    },
+    "0xd23fdb0": {
+      "references": [
+        {
+          "path": "src/noise/shuffle/optimizer.cpp",
+          "line": "Region{0xd23fdb0, 0x2e4, true,"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd2401d0"
+      ]
+    },
+    "0xd2402a2": {
+      "references": [
+        {
+          "path": "src/noise/shuffle/optimizer.cpp",
+          "line": "Region{0xd2402a2, 0xbc, false,"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd2406c2"
+      ]
+    },
+    "0xd240b0d": {
+      "references": [
+        {
+          "path": "src/noise/shuffle/optimizer.cpp",
+          "line": "Region{0xd240b0d, 0x1d4, false,"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd240f2d"
+      ]
+    },
+    "0xd1f0280": {
+      "references": [
+        {
+          "path": "src/spatial/containment/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kEvaluate = 0xd1f0280;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0xd1f06a0"
+      ]
+    },
+    "0xf61e8e8": {
+      "references": [
+        {
+          "path": "src/spatial/containment/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kDenseTable = 0xf61e8e8;"
+        }
+      ],
+      "method": "matched-code-rip-reference",
+      "candidates": [
+        "0xf61ece8"
+      ],
+      "evidence": [
+        {
+          "target": "0xf61ece8",
+          "instruction": "0xd1f02a7"
+        }
+      ]
+    },
+    "0x402d190": {
+      "references": [
+        {
+          "path": "src/synchronization/shared_mutex/optimizer.cpp",
+          "line": "{0x402d190, 16,"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 2048,
+      "candidates": [
+        "0x402d210"
+      ]
+    },
+    "0x402d230": {
+      "references": [
+        {
+          "path": "src/synchronization/shared_mutex/optimizer.cpp",
+          "line": "{0x402d230, 18,"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x402d2b0"
+      ]
+    },
+    "0x402d260": {
+      "references": [
+        {
+          "path": "src/synchronization/shared_mutex/optimizer.cpp",
+          "line": "{0x402d260, 19,"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x402d2e0"
+      ]
+    },
+    "0x402d290": {
+      "references": [
+        {
+          "path": "src/synchronization/shared_mutex/optimizer.cpp",
+          "line": "{0x402d290, 16,"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x402d310"
+      ]
+    },
+    "0x402d310": {
+      "references": [
+        {
+          "path": "src/synchronization/shared_mutex/optimizer.cpp",
+          "line": "{0x402d310, 18,"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x402d390"
+      ]
+    },
+    "0x402d350": {
+      "references": [
+        {
+          "path": "src/synchronization/shared_mutex/optimizer.cpp",
+          "line": "{0x402d350, 15,"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x402d3d0"
+      ]
+    },
+    "0x407cbe0": {
+      "references": [
+        {
+          "path": "src/timing/monotonic/optimizer.cpp",
+          "line": "constexpr std::uintptr_t kClock = 0x407cbe0;"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 256,
+      "candidates": [
+        "0x407cc60"
+      ]
+    },
+    "0x51886f0": {
+      "references": [
+        {
+          "path": "manual-prologue-probe",
+          "line": "0x51886f0"
+        }
+      ],
+      "method": "relocation-normalized-code",
+      "bytes": 2048,
+      "candidates": [
+        "0x5188770"
+      ]
+    }
+  }
+}
