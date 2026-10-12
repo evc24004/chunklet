@@ -55,10 +55,7 @@ void ChunkletPlugin::onEnable()
 {
     registerEvent(&ChunkletPlugin::onChunkLoad, *this);
     getLogger().info(
-        "Native chunk loader, cached ownership resolution, scalable shared mutexes, "
-        "transient terrain object pool, validated direct noise construction, "
-        "preallocated noise output, fused noise shuffle, and validated AVX2 area "
-        "and containment evaluation ready: BDS build ID {}.",
+        "Native chunk loader loaded successfully. Build ID {}",
         native::kSupportedBuildId);
 }
 
