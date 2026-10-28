@@ -16,8 +16,10 @@ constexpr std::uintptr_t kCompress=0x4280d50;
 constexpr std::uintptr_t kInflateInit=0x47b07a0;
 constexpr std::uintptr_t kInflate=0x47b0a10;
 constexpr std::uintptr_t kInflateEnd=0x47b3420;
-constexpr std::array<unsigned char,15> kOriginal{
-    0x55, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41, 0x54, 0x53, 0x48, 0x81, 0xec, 0x98, 0x00,
+// Whole prologue: six pushes and sub rsp,0x20098 (17 bytes, no RIP-relative operand).
+// The trampoline re-executes these bytes, so the copy must end on an instruction boundary.
+constexpr std::array<unsigned char,17> kOriginal{
+    0x55, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41, 0x54, 0x53, 0x48, 0x81, 0xec, 0x98, 0x00, 0x02, 0x00,
 };
 constexpr std::array<unsigned char,14> kInflateInitOriginal{0xb8,0xfa,0xff,0xff,0xff,0x48,0x85,0xd2,0x0f,0x84,0x97,0x00,0x00,0x00};
 constexpr std::array<unsigned char,14> kInflateOriginal{
@@ -41,7 +43,7 @@ std::atomic<std::size_t> calls{},validations{},mismatches{};
 // Unsupported inputs and failed attempts must not exhaust the startup sample.
 std::atomic<std::size_t> sample_slots{};
 std::atomic<std::uint64_t> input_bytes{},native_bytes{},candidate_bytes{},native_ns{},candidate_ns{};
-constexpr std::size_t kTrampolineSize=29;
+constexpr std::size_t kTrampolineSize=kOriginal.size()+14;
 
 template<std::size_t N> void guard(std::uintptr_t address,const std::array<unsigned char,N>& bytes)
 {
@@ -133,7 +135,7 @@ void install()
     original=reinterpret_cast<Compress>(trampoline);
     const auto page_size=sysconf(_SC_PAGESIZE);
     if(mprotect(page(),page_size,PROT_READ|PROT_WRITE|PROT_EXEC)!=0){remove();throw std::runtime_error("LevelDB compression patch protection failed");}
-    std::array<unsigned char,15> patch{};patch.fill(0x90);jump(patch.data(),reinterpret_cast<std::uintptr_t>(&checked_compress));
+    std::array<unsigned char,kOriginal.size()> patch{};patch.fill(0x90);jump(patch.data(),reinterpret_cast<std::uintptr_t>(&checked_compress));
     std::memcpy(reinterpret_cast<void*>(base+kCompress),patch.data(),patch.size());
     __builtin___clear_cache(reinterpret_cast<char*>(base+kCompress),reinterpret_cast<char*>(base+kCompress+patch.size()));
     installed=true;

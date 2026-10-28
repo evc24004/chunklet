@@ -2,6 +2,7 @@
 #include "allocation/transient/object_copy.h"
 #include "native/layout.h"
 
+#include <algorithm>
 #include <array>
 #include <cerrno>
 #include <cstddef>
@@ -158,9 +159,19 @@ void skip_initialization()
 
 std::pair<void *, std::size_t> target_page()
 {
+    // Every patched site, which can straddle a page boundary (it does on BDS 1.26.60.6).
     const auto page_size = static_cast<std::uintptr_t>(sysconf(_SC_PAGESIZE));
-    const auto begin = (base + kFirstAllocation) & ~(page_size - 1);
-    return {reinterpret_cast<void *>(begin), page_size};
+    const auto first = std::min({kFirstAllocation, kSecondAllocation, kFirstRelease,
+                                 kSecondRelease, kRedundantCopy, kInitializationStart});
+    const auto last = std::max({kFirstAllocation + kFirstAllocationOriginal.size(),
+                                kSecondAllocation + kSecondAllocationOriginal.size(),
+                                kFirstRelease + kFirstReleaseOriginal.size(),
+                                kSecondRelease + kSecondReleaseOriginal.size(),
+                                kRedundantCopy + kRedundantCopyOriginal.size(),
+                                kInitializationEnd});
+    const auto begin = (base + first) & ~(page_size - 1);
+    const auto end = (base + last + page_size - 1) & ~(page_size - 1);
+    return {reinterpret_cast<void *>(begin), end - begin};
 }
 
 void restore_all()
