@@ -6,8 +6,8 @@
 
 namespace chunklet::noise::construction::legacy_random {
 namespace {
-constexpr std::uintptr_t kNextInt = 0x8a5a9c0;
-constexpr std::uintptr_t kGenerate = 0xed4a030;
+constexpr std::uintptr_t kNextInt = 0x8d39450;
+constexpr std::uintptr_t kGenerate = 0xf60b970;
 
 std::uintptr_t executable_base;
 

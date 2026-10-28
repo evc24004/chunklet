@@ -18,7 +18,7 @@ using direct_kernel::construct_positional_into;
 using direct_kernel::kElementSize;
 using direct_kernel::kMaximumOctaves;
 
-constexpr std::uintptr_t kNextInt = 0x48ca750;
+constexpr std::uintptr_t kNextInt = 0x4a83a50;
 constexpr std::size_t kLegacyRandomSize = 0xa00;
 constexpr int kRequiredValidations = 8;
 

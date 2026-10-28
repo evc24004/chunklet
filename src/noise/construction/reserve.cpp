@@ -14,8 +14,8 @@
 
 namespace chunklet::noise::construction {
 namespace {
-constexpr std::uintptr_t kConstructorInit = 0xd23fd76;
-constexpr std::uintptr_t kAllocator = 0xf4463b0;
+constexpr std::uintptr_t kConstructorInit = 0xd813579;
+constexpr std::uintptr_t kAllocator = 0xfd34f88;
 constexpr std::size_t kElementSize = 0x124;
 constexpr std::array<unsigned char, 14> kOriginal{
     0x0f, 0x57, 0xc0, 0x0f, 0x11, 0x07, 0x48,

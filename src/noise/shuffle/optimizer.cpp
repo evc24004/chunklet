@@ -16,20 +16,30 @@
 
 namespace chunklet::noise::shuffle {
 namespace {
-constexpr std::uintptr_t kNextInt = 0x48ca750;
+constexpr std::uintptr_t kNextInt = 0x4a83a50;
+// Each region is one complete 256-iteration Fisher-Yates loop in the native
+// noise constructor: counter = 0x100 counting down, index counting up, the
+// random object in a callee-saved register and the bytes on the stack. The
+// replacement calls shuffle_values and then leaves every callee-saved register
+// exactly as the loop would: random unchanged, counter 0, index 0x100.
+// BDS 1.26.60.6 allocates these registers differently per loop.
 struct Region {
     std::uintptr_t offset;
     std::uint32_t stack_offset;
-    bool legacy;
+    std::string_view random_to_rdi;
+    std::string_view finish;
     std::string_view expected;
 };
 constexpr std::array kRegions{
-    Region{0xd2401d0, 0x2e4, true,
-           "bb000100004531f6448b6424700f1f00498b45004c89ef89deff50184401f04898420fb68c34e40200000fb69404e402000042889434e4020000888c04e402000049ffc648ffcb75c7"},
-    Region{0xd2406c2, 0xbc, false,
-           "bb000100004531e4660f1f440000498b074c89ff89deff50184401e04898420fb68c24bc0000000fb69404bc00000042889424bc000000888c04bc00000049ffc448ffcb75c8"},
-    Region{0xd240f2d, 0x1d4, false,
-           "bb000100004531e466662e0f1f840000000000498b074c89ff89deff50184401e04898420fb68c24d40100000fb69404d401000042889424d4010000888c04d401000049ffc448ffcb75c8"},
+    // random rbp, counter r12, index rbx
+    Region{0xd8138d5, 0x2c4, "4889ef", "4531e4bb00010000",
+           "41bc0001000031db0f1f00488b45004889ef4489e6ff501801d848980fb68c1cc40200000fb69404c402000088941cc4020000888c04c402000048ffc349ffcc75c9"},
+    // random r15, counter r13, index r14
+    Region{0xd813ca6, 0x8c, "4c89ff", "4531ed41be00010000",
+           "41bd000100004531f690498b074c89ff4489eeff50184401f04898420fb68c348c0000000fb694048c000000428894348c000000888c048c00000049ffc649ffcd75c7"},
+    // random r15, counter r12, index rbx
+    Region{0xd814085, 0x19c, "4c89ff", "4531e4bb00010000",
+           "41bc0001000031db0f1f00498b074c89ff4489e6ff501801d848980fb68c1c9c0100000fb694049c01000088941c9c010000888c049c01000048ffc349ffcc75ca"},
 };
 std::uintptr_t base;
 bool installed;
@@ -137,9 +147,13 @@ void write_region(const Region &region, bool optimize)
     }
     std::memset(target, 0x90, size);
     std::size_t cursor = 0;
-    const unsigned char argument[] = {
-        0x4c, 0x89, static_cast<unsigned char>(region.legacy ? 0xef : 0xff),
-        0x48, 0x8d, 0xb4, 0x24};
+    const auto emit = [&](std::string_view hex) {
+        for (std::size_t index = 0; index < hex.size() / 2; ++index) {
+            target[cursor++] = expected_byte(hex, index);
+        }
+    };
+    emit(region.random_to_rdi);
+    const unsigned char argument[] = {0x48, 0x8d, 0xb4, 0x24};  // lea rsi, [rsp + disp32]
     std::memcpy(target + cursor, argument, sizeof(argument));
     cursor += sizeof(argument);
     std::memcpy(target + cursor, &region.stack_offset, sizeof(region.stack_offset));
@@ -149,18 +163,9 @@ void write_region(const Region &region, bool optimize)
     const auto helper = reinterpret_cast<std::uintptr_t>(&shuffle_values);
     std::memcpy(target + cursor, &helper, sizeof(helper));
     cursor += sizeof(helper);
-    const unsigned char suffix[] = {
-        0xff, 0xd0, 0x31, 0xdb, 0x41,
-        static_cast<unsigned char>(region.legacy ? 0xbe : 0xbc),
-        0x00, 0x01, 0x00, 0x00};
-    std::memcpy(target + cursor, suffix, sizeof(suffix));
-    cursor += sizeof(suffix);
-    if (region.legacy) {
-        // This loop's replaced prologue also loaded the octave from [rsp+0x70].
-        // Keep it for ldexp and the element metadata after the shuffle.
-        constexpr unsigned char restore_octave[] = {0x44, 0x8b, 0x64, 0x24, 0x70};
-        std::memcpy(target + cursor, restore_octave, sizeof(restore_octave));
-    }
+    target[cursor++] = 0xff;  // call rax
+    target[cursor++] = 0xd0;
+    emit(region.finish);
 }
 
 bool make_writable()

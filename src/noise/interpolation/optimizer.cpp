@@ -18,7 +18,7 @@
 #include <unistd.h>
 namespace chunklet::noise::interpolation {
 namespace {
-constexpr std::uintptr_t kMultiOctaveSample = 0xd2414e0;
+constexpr std::uintptr_t kMultiOctaveSample = 0xd814880;
 constexpr std::size_t kValidationCalls = 64;
 constexpr std::array<unsigned char, 14> kOriginal{
     0x55, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55,

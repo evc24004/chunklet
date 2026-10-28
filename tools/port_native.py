@@ -59,6 +59,9 @@ def update_guards(text, old, new, mapping):
     def region(match):
         address = int(match['address'], 0)
         original = bytes.fromhex(match['bytes'])
+        if address not in mapping:
+            # Hand-ported region (different register allocation); verify_native checks it.
+            return match[0]
         if old.read(address, len(original)) != original:
             raise ValueError('invalid shuffle guard')
         return match['head'] + new.read(mapping[address], len(original)).hex() + '"'

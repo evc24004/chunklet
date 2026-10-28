@@ -18,9 +18,9 @@
 
 namespace chunklet::spatial::containment {
 namespace {
-constexpr std::uintptr_t kEvaluate = 0xd1f06a0;
-constexpr std::uintptr_t kDenseTable = 0xf61ece8;
-constexpr std::uintptr_t kLocalTable = 0xf61ecf8;
+constexpr std::uintptr_t kEvaluate = 0xd7b8950;
+constexpr std::uintptr_t kDenseTable = 0xff1d728;
+constexpr std::uintptr_t kLocalTable = 0xff1d738;
 constexpr std::array<unsigned char, 16> kOriginal{
     0x55, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41,
     0x54, 0x53, 0x48, 0x83, 0xec, 0x18, 0x89, 0xd3};

@@ -194,8 +194,7 @@ void verify_layout()
                "LevelStorageWriteBatch::put");
     check_code(base, kSerializeChunkTarget,
                std::array<unsigned char, 17>{
-                   0x55, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41, 0x54, 0x53,
-                   0x48, 0x81, 0xec, 0x58, 0x01, 0x00, 0x00},
+                   0x55, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41, 0x54, 0x53, 0x48, 0x81, 0xec, 0x68, 0x01, 0x00, 0x00},
                "DBChunkStorage::_serializeChunk");
     check_code(base, kMarkChunkDirtyTarget,
                std::array<unsigned char, 10>{
@@ -203,7 +202,7 @@ void verify_layout()
                "LevelChunk::markSaveIfNeverSaved");
     check_code(base, kSetChunkFinalizedTarget,
                std::array<unsigned char, 7>{
-                   0x89, 0xb7, 0x14, 0x11, 0x00, 0x00, 0xc3},
+                   0x89, 0xb7, 0x8c, 0x11, 0x00, 0x00, 0xc3},
                "LevelChunk::setFinalizedState");
 }
 
